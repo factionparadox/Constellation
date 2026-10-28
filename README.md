@@ -22,7 +22,7 @@ The name comes from Fabergé's Constellation Egg of 1917, the last of the Imperi
 ## Installing
 
 1. Write the ISO to a USB stick and boot it in UEFI mode.
-2. The live system offers to start the installer. It asks for your user name, a password and whether to encrypt (and which disk, if there is more than one), then erases that disk and installs. No internet connection is needed: every package, and the Russian voices and course books, are on the stick.
+2. The live system offers to start the installer. It asks for your user name, a password and whether to encrypt (and which disk, if there is more than one), then erases that disk and installs. No internet connection is needed: every package, and the Russian voices, course books and audiobooks, are on the stick.
 
 Rehearse first with `constellation-install --dry-run`, which shows every step and changes nothing.
 

@@ -5,7 +5,7 @@
 #
 # The ISO installs with no network: every package an installed system needs is on it
 # (build/build-offline-repo.sh), and so are the Russian content packs named by --content
-# (default: ru-voices ru-course; add ru-audiobooks for 4.6 GB more), from the content mirror.
+# (default: ru-voices ru-course ru-audiobooks, about 5 GB), from the content mirror.
 #
 # Starts from Arch's own releng profile (so it follows archiso as Arch updates it) and adds:
 # the LTS kernel with OpenZFS, the birthDate-free systemd in place of Arch's, Constellation's
@@ -16,7 +16,7 @@ set -Eeuo pipefail
 HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd -- "$HERE/.." && pwd)
 PKGREPO=$REPO/out/repo OUT=$REPO/out WORK=${CONSTELLATION_WORK:-$REPO/work}
-CONTENT='ru-voices ru-course'
+CONTENT='ru-voices ru-course ru-audiobooks'
 RELENG=${CONSTELLATION_RELENG:-/usr/share/archiso/configs/releng}
 REMOTE=${CONSTELLATION_REMOTE:-https://github.com/factionparadox/Constellation/releases/download/repo}
 

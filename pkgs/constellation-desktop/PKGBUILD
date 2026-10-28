@@ -17,7 +17,7 @@ depends=(
   'mesa' 'vulkan-intel' 'intel-media-driver' 'sof-firmware' 'brightnessctl'
   # apps
   'kitty' 'fish' 'dolphin' 'firefox' 'discord' 'vlc' 'vlc-plugins-all' 'ani-cli' 'proton-vpn-gtk-app'
-  'wofi' 'grim' 'slurp' 'swappy' 'mpv' 'fastfetch' 'btop'
+  'grim' 'slurp' 'swappy' 'mpv' 'fastfetch' 'btop'
   # fonts
   'noto-fonts' 'noto-fonts-cjk' 'noto-fonts-emoji' 'ttf-jetbrains-mono-nerd'
 )

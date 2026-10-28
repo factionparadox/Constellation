@@ -14,7 +14,7 @@ niri, a scrolling tiling compositor: windows open side by side in an endless str
 | Super+D | Discord |
 | Super+V | VLC |
 | Super+E | file manager (Dolphin) |
-| Super+Space | Wofi application launcher |
+| Super+Space | Caelestia launcher |
 | Super+A | ani-cli |
 | Super+P | Proton VPN |
 | Super+Alt+R | today's Russian words |
