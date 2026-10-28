@@ -1,7 +1,7 @@
 # Constellation desktop: niri with the Caelestia shell, and the apps and services around it.
 pkgname=constellation-desktop
 pkgver=0.1.0
-pkgrel=2
+pkgrel=3
 pkgdesc='Constellation desktop: niri, the Caelestia shell, greetd and the everyday apps'
 arch=('any')
 url='https://github.com/factionparadox/Constellation'
@@ -25,9 +25,11 @@ depends=(
 install=constellation-desktop.install
 source=('config.kdl' 'start-shell' 'greetd.toml' 'greetd-constellation.conf' 'shell.json' 'wallpaper.png'
         'greeter/shell.qml' 'greeter/Greeter.qml' 'greeter/Sky.qml' 'greeter/niri.kdl'
-        'greeter/constellation-greeter' 'greeter/constellation-greeter.tmpfiles')
+        'greeter/constellation-greeter' 'greeter/constellation-greeter.tmpfiles'
+        'constellation-logo.png' 'fastfetch/constellation.txt' 'fastfetch/config.jsonc')
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
-            'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+            'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
+            'SKIP' 'SKIP' 'SKIP')
 
 package() {
   install -Dm0644 config.kdl "$pkgdir/etc/niri/config.kdl"
@@ -41,5 +43,9 @@ package() {
   done
   install -Dm0755 constellation-greeter "$pkgdir/usr/lib/constellation/greeter"
   install -Dm0644 constellation-greeter.tmpfiles "$pkgdir/usr/lib/tmpfiles.d/constellation-greeter.conf"
+  # the Constellation mark, and fastfetch drawing it in its own colours
+  install -Dm0644 constellation-logo.png "$pkgdir/usr/share/pixmaps/constellation.png"
+  install -Dm0644 constellation.txt "$pkgdir/usr/share/constellation/fastfetch/constellation.txt"
+  install -Dm0644 config.jsonc "$pkgdir/etc/skel/.config/fastfetch/config.jsonc"
   install -Dm0644 wallpaper.png "$pkgdir/usr/share/backgrounds/constellation/constellation.png"
 }

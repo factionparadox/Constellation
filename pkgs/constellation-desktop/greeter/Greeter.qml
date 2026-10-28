@@ -226,8 +226,19 @@ Item {
         height: 48 * greeter.u
         opacity: 0
 
-        Column {
-            anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+        Row {
+          anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+          spacing: 12 * greeter.u
+          Image {
+            anchors.verticalCenter: parent.verticalCenter
+            source: "file:///usr/share/pixmaps/constellation.png"
+            width: 44 * greeter.u; height: width
+            sourceSize { width: 128; height: 128 }
+            fillMode: Image.PreserveAspectFit
+            smooth: true; mipmap: true
+          }
+          Column {
+            anchors.verticalCenter: parent.verticalCenter
             spacing: 2 * greeter.u
             Text {
                 text: "Созвездие"
@@ -239,6 +250,7 @@ Item {
                 color: greeter.gold
                 font { family: greeter.sans; pixelSize: 10 * greeter.u; weight: Font.DemiBold; letterSpacing: 4 * greeter.u }
             }
+          }
         }
 
         Row {

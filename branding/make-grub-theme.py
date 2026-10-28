@@ -80,16 +80,11 @@ def background() -> Image.Image:
 
 
 def logo(size: int) -> Image.Image:
-    """The supplied mark, with its white background made transparent."""
-    src = Image.open(HERE / 'constellation-logo.webp').convert('RGB')
-    rgba = Image.new('RGBA', src.size)
-    for (x, y), (r, g, b) in zip(((x, y) for y in range(src.height) for x in range(src.width)), src.get_flattened_data()):
-        white = min(r, g, b)
-        alpha = 0 if white > 238 else 255 if white < 200 else round((238 - white) / 38 * 255)
-        rgba.putpixel((x, y), (r, g, b, alpha))
-    rgba = rgba.crop(rgba.getchannel('A').getbbox())
-    rgba.thumbnail((size, size), Image.LANCZOS)
-    return rgba
+    """The Constellation mark: the Arch arrow drawn as a constellation of gold stars."""
+    mark = Image.open(HERE / 'constellation-logo.png').convert('RGBA')
+    mark = mark.crop(mark.getchannel('A').getbbox())
+    mark.thumbnail((size, size), Image.LANCZOS)
+    return mark
 
 
 def selection():

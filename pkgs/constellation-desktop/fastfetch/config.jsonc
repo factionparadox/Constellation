@@ -1,0 +1,46 @@
+// Constellation's fastfetch: the Constellation mark in its own blues and gold.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "file",
+    "source": "/usr/share/constellation/fastfetch/constellation.txt",
+    "color": {
+      "1": "38;5;31",
+      "2": "38;5;32",
+      "3": "38;5;39",
+      "4": "38;5;74",
+      "5": "38;5;179",
+      "6": "38;5;215"
+    },
+    "padding": {
+      "right": 2
+    }
+  },
+  "display": {
+    "separator": "  ",
+    "color": {
+      "keys": "38;5;179",
+      "title": "38;5;39"
+    }
+  },
+  "modules": [
+    "title",
+    "separator",
+    "os",
+    "host",
+    "kernel",
+    "uptime",
+    "packages",
+    "shell",
+    "wm",
+    "terminal",
+    "cpu",
+    "gpu",
+    "memory",
+    "disk",
+    "battery",
+    "locale",
+    "break",
+    "colors"
+  ]
+}

@@ -43,6 +43,20 @@ class GreeterWrapper(unittest.TestCase):
         self.assertIn('--cmd niri-session', log)
 
 
+class Branding(unittest.TestCase):
+    def test_the_packaged_mark_is_the_branding_mark(self):
+        self.assertEqual((ROOT / 'branding/constellation-logo.png').read_bytes(),
+                         (ROOT / 'pkgs/constellation-desktop/constellation-logo.png').read_bytes())
+
+    def test_fastfetch_logo_uses_fastfetch_colour_codes(self):
+        art = (ROOT / 'pkgs/constellation-desktop/fastfetch/constellation.txt').read_text()
+        self.assertNotIn('${c', art)
+        self.assertNotRegex(art, r'(?<!\$)\$(?![1-6$])')   # every other $ is escaped as $$
+        import json, re
+        cfg = json.loads(re.sub(r'^//.*$', '', (ROOT / 'pkgs/constellation-desktop/fastfetch/config.jsonc').read_text(), flags=re.M))
+        self.assertEqual(sorted(cfg['logo']['color']), ['1', '2', '3', '4', '5', '6'])
+
+
 class GreeterFiles(unittest.TestCase):
     def test_niri_runs_the_greeter_and_quits_with_it(self):
         kdl = (GREETER / 'niri.kdl').read_text()
