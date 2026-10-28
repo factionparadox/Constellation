@@ -1,7 +1,7 @@
 # Constellation desktop: niri with the Caelestia shell, and the apps and services around it.
 pkgname=constellation-desktop
 pkgver=0.1.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Constellation desktop: niri, the Caelestia shell, greetd and the everyday apps'
 arch=('any')
 url='https://github.com/factionparadox/Constellation'
