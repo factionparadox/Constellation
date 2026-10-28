@@ -77,7 +77,12 @@ publish() {    # publish DIR: sign the packages makepkg left in DIR, move them t
 
 already_built() {   # all of this PKGBUILD's packages are in OUT already
   local dir=$1 f
-  while read -r f; do [ -f "$OUT/${f##*/}" ] || return 1; done < <(cd "$dir" && makepkg --packagelist)
+  # --packagelist names a -debug package even where none is made (arch=any), so those are not
+  # required: otherwise every arch=any package would be rebuilt on every run.
+  while read -r f; do
+    case "${f##*/}" in *-debug-*) continue ;; esac
+    [ -f "$OUT/${f##*/}" ] || return 1
+  done < <(cd "$dir" && makepkg --packagelist)
 }
 
 build() {      # build NAME DIR CHROOT(0|1)

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-GREETER = ROOT / 'pkgs/constellation-desktop/greeter'
+GREETER = ROOT / 'pkgs/constellation-desktop'
 
 
 class GreeterWrapper(unittest.TestCase):
@@ -49,17 +49,17 @@ class Branding(unittest.TestCase):
                          (ROOT / 'pkgs/constellation-desktop/constellation-logo.png').read_bytes())
 
     def test_fastfetch_logo_uses_fastfetch_colour_codes(self):
-        art = (ROOT / 'pkgs/constellation-desktop/fastfetch/constellation.txt').read_text()
+        art = (ROOT / 'pkgs/constellation-desktop/fastfetch-logo.txt').read_text()
         self.assertNotIn('${c', art)
         self.assertNotRegex(art, r'(?<!\$)\$(?![1-6$])')   # every other $ is escaped as $$
         import json, re
-        cfg = json.loads(re.sub(r'^//.*$', '', (ROOT / 'pkgs/constellation-desktop/fastfetch/config.jsonc').read_text(), flags=re.M))
+        cfg = json.loads(re.sub(r'^//.*$', '', (ROOT / 'pkgs/constellation-desktop/fastfetch.jsonc').read_text(), flags=re.M))
         self.assertEqual(sorted(cfg['logo']['color']), ['1', '2', '3', '4', '5', '6'])
 
 
 class GreeterFiles(unittest.TestCase):
     def test_niri_runs_the_greeter_and_quits_with_it(self):
-        kdl = (GREETER / 'niri.kdl').read_text()
+        kdl = (GREETER / 'greeter-niri.kdl').read_text()
         self.assertIn('qs -p /usr/share/constellation/greeter/shell.qml; niri msg action quit --skip-confirmation', kdl)
         self.assertRegex(kdl, r'binds \{\s*\}')            # nothing to escape to
 

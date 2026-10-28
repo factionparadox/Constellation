@@ -16,6 +16,11 @@ def array(text, name):
 
 
 class PackageTests(unittest.TestCase):
+    def test_build_scripts_are_executable(self):
+        import os
+        for script in (ROOT / 'build').glob('*.sh'):
+            self.assertTrue(os.access(script, os.X_OK), f'{script.name} is not executable')
+
     def test_sources_exist_and_sums_line_up(self):
         for pkgbuild in PKGS.glob('*/PKGBUILD'):
             text = pkgbuild.read_text()
@@ -24,6 +29,8 @@ class PackageTests(unittest.TestCase):
             for s in sources:
                 if '://' in s or '::' in s or s.startswith('git+'):
                     continue
+                # makepkg looks for local sources by file name in the PKGBUILD's own folder.
+                self.assertNotIn('/', s, f'{pkgbuild.parent.name}: {s} must be in the package folder itself')
                 self.assertTrue((pkgbuild.parent / s).is_file(), f'{pkgbuild.parent.name}: {s}')
             pkgname = re.search(r'^pkgname=(\S+)', text, re.M).group(1)
             self.assertEqual(pkgname, pkgbuild.parent.name)

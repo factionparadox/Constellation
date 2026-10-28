@@ -1,7 +1,7 @@
 # Constellation desktop: niri with the Caelestia shell, and the apps and services around it.
 pkgname=constellation-desktop
 pkgver=0.1.0
-pkgrel=3
+pkgrel=4
 pkgdesc='Constellation desktop: niri, the Caelestia shell, greetd and the everyday apps'
 arch=('any')
 url='https://github.com/factionparadox/Constellation'
@@ -24,9 +24,9 @@ depends=(
 )
 install=constellation-desktop.install
 source=('config.kdl' 'start-shell' 'greetd.toml' 'greetd-constellation.conf' 'shell.json' 'wallpaper.png'
-        'greeter/shell.qml' 'greeter/Greeter.qml' 'greeter/Sky.qml' 'greeter/niri.kdl'
-        'greeter/constellation-greeter' 'greeter/constellation-greeter.tmpfiles'
-        'constellation-logo.png' 'fastfetch/constellation.txt' 'fastfetch/config.jsonc')
+        'shell.qml' 'Greeter.qml' 'Sky.qml' 'greeter-niri.kdl'
+        'constellation-greeter' 'constellation-greeter.tmpfiles'
+        'constellation-logo.png' 'fastfetch-logo.txt' 'fastfetch.jsonc')
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
             'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
             'SKIP' 'SKIP' 'SKIP')
@@ -38,14 +38,15 @@ package() {
   install -Dm0644 greetd-constellation.conf "$pkgdir/usr/lib/systemd/system/greetd.service.d/constellation.conf"
   install -Dm0644 shell.json "$pkgdir/etc/skel/.config/caelestia/shell.json"
   # the graphical login screen
-  for f in shell.qml Greeter.qml Sky.qml niri.kdl; do
+  for f in shell.qml Greeter.qml Sky.qml; do
     install -Dm0644 "$f" "$pkgdir/usr/share/constellation/greeter/$f"
   done
+  install -Dm0644 greeter-niri.kdl "$pkgdir/usr/share/constellation/greeter/niri.kdl"
   install -Dm0755 constellation-greeter "$pkgdir/usr/lib/constellation/greeter"
   install -Dm0644 constellation-greeter.tmpfiles "$pkgdir/usr/lib/tmpfiles.d/constellation-greeter.conf"
   # the Constellation mark, and fastfetch drawing it in its own colours
   install -Dm0644 constellation-logo.png "$pkgdir/usr/share/pixmaps/constellation.png"
-  install -Dm0644 constellation.txt "$pkgdir/usr/share/constellation/fastfetch/constellation.txt"
-  install -Dm0644 config.jsonc "$pkgdir/etc/skel/.config/fastfetch/config.jsonc"
+  install -Dm0644 fastfetch-logo.txt "$pkgdir/usr/share/constellation/fastfetch/constellation.txt"
+  install -Dm0644 fastfetch.jsonc "$pkgdir/etc/skel/.config/fastfetch/config.jsonc"
   install -Dm0644 wallpaper.png "$pkgdir/usr/share/backgrounds/constellation/constellation.png"
 }
