@@ -1,0 +1,14 @@
+# AUR packages Constellation builds into its own repository, each pinned to a reviewed
+# AUR git commit. Built in this order (a package's AUR dependencies come first).
+# Pin or update with:  build/aur-pin.sh NAME   (shows the PKGBUILD or the diff before pinning)
+# name                                commit
+systemd-remove-birthdate              UNPINNED
+zfs-utils                             UNPINNED
+zfs-dkms                              UNPINNED
+paru                                  UNPINNED
+quickshell-git                        UNPINNED
+libcava                               UNPINNED
+app2unit                              UNPINNED
+caelestia-cli                         UNPINNED
+ttf-material-symbols-variable-git     UNPINNED
+ttf-rubik-vf                          UNPINNED

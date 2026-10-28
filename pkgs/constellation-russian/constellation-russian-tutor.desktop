@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Russian Tutor
+Name[ru]=Репетитор русского
+Comment=Practise Russian with the AI tutor that runs on this computer
+Exec=kitty constellation-russian --pause tutor
+Icon=preferences-desktop-locale
+Terminal=false
+Categories=Education;Languages;

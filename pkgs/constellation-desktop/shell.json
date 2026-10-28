@@ -1,0 +1,13 @@
+{
+  "general": {
+    "apps": {
+      "terminal": ["kitty"],
+      "audio": ["pavucontrol"],
+      "playback": ["mpv"],
+      "explorer": ["dolphin"]
+    }
+  },
+  "paths": {
+    "wallpaperDir": "/usr/share/backgrounds/constellation"
+  }
+}

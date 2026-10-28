@@ -1,0 +1,17 @@
+#!/bin/sh
+# Copy ZFSBootMenu to the EFI partition. The previous copy becomes the backup entry,
+# so a bad ZFSBootMenu release can always be skipped from the firmware boot menu.
+set -eu
+esp=${CONSTELLATION_ESP:-/boot/efi}
+src=/usr/share/zfsbootmenu
+dir="$esp/EFI/ZBM"
+mountpoint -q "$esp" 2>/dev/null || { echo "  $esp is not mounted; ZFSBootMenu not updated"; exit 0; }
+mkdir -p "$dir" "$esp/EFI/BOOT"
+if [ -f "$dir/VMLINUZ.EFI" ] && ! cmp -s "$src/VMLINUZ.EFI" "$dir/VMLINUZ.EFI"; then
+  cp "$dir/VMLINUZ.EFI" "$dir/VMLINUZ-BACKUP.EFI"
+fi
+cp "$src/VMLINUZ.EFI" "$dir/VMLINUZ.EFI"
+[ -f "$dir/VMLINUZ-BACKUP.EFI" ] || cp "$src/VMLINUZ.EFI" "$dir/VMLINUZ-BACKUP.EFI"
+[ ! -f "$src/VMLINUZ-RECOVERY.EFI" ] || cp "$src/VMLINUZ-RECOVERY.EFI" "$dir/VMLINUZ-RECOVERY.EFI"
+cp "$src/VMLINUZ.EFI" "$esp/EFI/BOOT/BOOTX64.EFI"     # for firmware that forgets boot entries
+echo "  ZFSBootMenu updated in $dir"

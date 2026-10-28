@@ -1,0 +1,48 @@
+# Constellation GRUB theme (live USB menu). Images: branding/make-grub-theme.py
+title-text: ""
+desktop-image: "background.png"
+desktop-image-scale-method: "stretch"
+desktop-color: "#050b1f"
+terminal-font: "Inter Regular 20"
+message-font: "Inter Regular 20"
+message-color: "#c9d4ee"
+
++ boot_menu {
+    left = 27%
+    top = 38%
+    width = 46%
+    height = 42%
+    item_font = "Inter Regular 28"
+    selected_item_font = "Inter Regular 28"
+    item_color = "#b8c6e8"
+    selected_item_color = "#ffffff"
+    item_height = 58
+    item_padding = 18
+    item_spacing = 8
+    icon_width = 0
+    icon_height = 0
+    item_icon_space = 0
+    selected_item_pixmap_style = "select_*.png"
+    scrollbar = false
+}
+
++ label {
+    id = "__timeout__"
+    left = 27%
+    top = 82%
+    width = 46%
+    align = "center"
+    font = "Inter Regular 20"
+    color = "#e0b868"
+    text = "@TIMEOUT_NOTIFICATION_LONG@"
+}
+
++ label {
+    left = 27%
+    top = 87%
+    width = 46%
+    align = "center"
+    font = "Inter Regular 20"
+    color = "#7f8fb8"
+    text = "Enter starts   ·   E edits the entry   ·   C opens a command line"
+}

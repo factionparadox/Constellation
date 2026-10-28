@@ -1,0 +1,24 @@
+# ZFSBootMenu's prebuilt EFI boot loader (release and recovery images).
+# The SHA-256 sums were checked against the release's signify signature
+# (releng/keys/zfsbootmenu.pub) when this version was pinned.
+pkgname=zfsbootmenu-efi
+pkgver=3.1.0
+pkgrel=1
+_kernel=linux6.18
+pkgdesc='ZFSBootMenu EFI images: a boot loader that boots ZFS boot environments'
+arch=('x86_64')
+url='https://github.com/zbm-dev/zfsbootmenu'
+license=('MIT')
+source=("https://github.com/zbm-dev/zfsbootmenu/releases/download/v$pkgver/zfsbootmenu-release-x86_64-v$pkgver-$_kernel.EFI"
+        "https://github.com/zbm-dev/zfsbootmenu/releases/download/v$pkgver/zfsbootmenu-recovery-x86_64-v$pkgver-$_kernel.EFI"
+        "https://raw.githubusercontent.com/zbm-dev/zfsbootmenu/v$pkgver/LICENSE")
+noextract=("${source[@]##*/}")
+sha256sums=('0a2a192de90be4935c21a810f9e5281f0cbf625a76b2d6e9125c39c13becfe83'
+            '06c3c9409fa92b26e45c88f3bb4a35a544e6ef19ca76513b04d1494320eafc05'
+            'SKIP')
+
+package() {
+  install -Dm0644 "zfsbootmenu-release-x86_64-v$pkgver-$_kernel.EFI" "$pkgdir/usr/share/zfsbootmenu/VMLINUZ.EFI"
+  install -Dm0644 "zfsbootmenu-recovery-x86_64-v$pkgver-$_kernel.EFI" "$pkgdir/usr/share/zfsbootmenu/VMLINUZ-RECOVERY.EFI"
+  install -Dm0644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

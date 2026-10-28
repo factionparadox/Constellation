@@ -1,0 +1,11 @@
+# With an encrypted pool the initramfs holds the key file: keep it readable by root only.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = *
+
+[Action]
+Description = Protecting the initramfs (it holds the disk key)...
+When = PostTransaction
+Exec = /bin/sh -c 'ls /etc/zfs/*.key >/dev/null 2>&1 && chmod 600 /boot/initramfs-*.img 2>/dev/null; exit 0'

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Russian Words
+Name[ru]=Русские слова
+Comment=Ten minutes of spaced-repetition Russian words, A1 to B2
+Exec=kitty constellation-russian --pause words
+Icon=accessories-dictionary
+Terminal=false
+Categories=Education;Languages;

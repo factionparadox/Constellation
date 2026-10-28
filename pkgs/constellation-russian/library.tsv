@@ -1,0 +1,45 @@
+# Constellation Russian library: public-domain US government language courses.
+# Course pages: https://www.fsi-language-courses.org/russian/ and ERIC (eric.ed.gov)
+# These sources publish no checksums. The builder records each file's SHA-256
+# on first download (payloads/russian/library.lock.json) and refuses any later
+# download that differs. A missing file is reported, not fatal.
+# destination path (under /var/lib/constellation/russian/library)<TAB>URL
+# DLI Russian Basic Course: fsi-language-courses.org made its copies private (403) in
+# October 2026. These DLI volumes are the ones ERIC still publishes in full.
+FSI Russian/Active Introduction/FSI - Russian Active Introduction - Student Text.pdf	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/Active%20Introduction/FSI%20-%20Russian%20Active%20Introduction%20-%20Student%20Text.pdf
+FSI Russian/FAST/FsiRussianFast-Lessons1-5.pdf	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FsiRussianFast-Lessons1-5.pdf
+FSI Russian/FAST/FsiRussianFast-Lessons6-8.pdf	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FsiRussianFast-Lessons6-8.pdf
+FSI Russian/FAST/FsiRussianFast-Lessons9-11.pdf	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FsiRussianFast-Lessons9-11.pdf
+FSI Russian/FAST/FSI Russian FAST - Tape 1.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Tape%201.mp3
+FSI Russian/FAST/FSI Russian FAST - Supplement.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Supplement.mp3
+FSI Russian/FAST/FSI Russian FAST - Tape 2.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Tape%202.mp3
+FSI Russian/FAST/FSI Russian FAST - Tape 3.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Tape%203.mp3
+FSI Russian/FAST/FSI Russian FAST - Tape 4.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Tape%204.mp3
+FSI Russian/FAST/FSI Russian FAST - Tape 5.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Tape%205.mp3
+FSI Russian/FAST/FSI Russian FAST - Tape 6.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Tape%206.mp3
+FSI Russian/FAST/FSI Russian FAST - Tape 7.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Tape%207.mp3
+FSI Russian/FAST/FSI Russian FAST - Tape 8.mp3	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages/Russian/FAST/FSI%20Russian%20FAST%20-%20Tape%208.mp3
+Peace Corps Russian/Russian General Course (ED402767).pdf	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages-peacecorps/Russian-General/ED402767.pdf
+DLI Russian Basic Course (ERIC)/Russian Basic Course, Volume XIII, Lessons 60-63 (ED056606).pdf	https://files.eric.ed.gov/fulltext/ED056606.pdf
+DLI Russian Basic Course (ERIC)/Russian Basic Course, Volume XVII, Lessons 76-79 (ED056593).pdf	https://files.eric.ed.gov/fulltext/ED056593.pdf
+DLI Russian Basic Course (ERIC)/Russian Basic Course, Reader Volume II (ED052650).pdf	https://files.eric.ed.gov/fulltext/ED052650.pdf
+DLI Russian Basic Course (ERIC)/Russian Basic Course, Dialogue Cartoon Guides, Lessons 1-83 (ED054689).pdf	https://files.eric.ed.gov/fulltext/ED054689.pdf
+DLI Russian Basic Course (ERIC)/Russian Basic Course, Naval Terminology Dictionary (ED051706).pdf	https://files.eric.ed.gov/fulltext/ED051706.pdf
+Peace Corps Russian/Peace Corps Russian Language Competencies Workbook.pdf	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages-peacecorps/Russian-General/Peace%2520Corps%2520Russian%2520Language%2520Competencies%2520Workbook.pdf
+Peace Corps Russian/Kyrgyzstan - Russian Language Lessons.pdf	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages-peacecorps/Russian-Kyrgyz/Russian_Language_Lessons.pdf
+Peace Corps Russian/Turkmenistan - Russian Language Lessons (ED402741).pdf	https://fsi-language-courses-media.nyc3.cdn.digitaloceanspaces.com/languages-peacecorps/Russian-Turkmenistan/ED402741.pdf
+# Между нами (University of Kansas, CC BY-NC-ND 3.0): vocabulary lists and the two workbooks.
+# The whole online textbook with its audio is copied separately (fetch-mezhdunami.py).
+Mezhdu nami/Vocabulary/Unit 1 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit1.pdf
+Mezhdu nami/Vocabulary/Unit 2 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit2.pdf
+Mezhdu nami/Vocabulary/Unit 3 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit3.pdf
+Mezhdu nami/Vocabulary/Unit 4 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit4.pdf
+Mezhdu nami/Vocabulary/Unit 5 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit5.pdf
+Mezhdu nami/Vocabulary/Unit 6 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit6.pdf
+Mezhdu nami/Vocabulary/Unit 7 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit7.pdf
+Mezhdu nami/Vocabulary/Unit 8 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit8.pdf
+Mezhdu nami/Vocabulary/Unit 9 vocabulary.pdf	https://mezhdunami.org/pdfs/vocabulary_unit9.pdf
+Mezhdu nami/Workbooks/Classroom activities (Работа в аудитории) Units 1-5.pdf	https://mezhdunami.org/instructors/2026/MN1E%20RVA1-5%20Su2026.pdf
+Mezhdu nami/Workbooks/Homework (Домашние задания) Units 1-5.pdf	https://mezhdunami.org/instructors/2026/MN1E%20DZ1-5%20Su2026.pdf
+Mezhdu nami/Workbooks/Classroom activities (Работа в аудитории) Units 6-9.pdf	https://mezhdunami.org/instructors/2026/MN1E%20RVA6-9%20Su2026.pdf
+Mezhdu nami/Workbooks/Homework (Домашние задания) Units 6-9.pdf	https://mezhdunami.org/instructors/2026/MN1E%20DZ6-9%20Su2026.pdf

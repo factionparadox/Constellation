@@ -1,0 +1,18 @@
+#!/bin/sh
+# Constellation: snapshot the ZFS root before a pacman transaction (pacman PreTransaction hook).
+# Keeps the newest $KEEP pacman snapshots. Never fails, so it can never block pacman.
+KEEP=${CONSTELLATION_SNAPSHOTS_KEEP:-20}
+[ "$(findmnt -no FSTYPE / 2>/dev/null)" = zfs ] || exit 0
+command -v zfs >/dev/null 2>&1 || exit 0
+ds=$(findmnt -no SOURCE /)
+now=$(date +%s)
+# One snapshot per few minutes is enough: paru can run pacman several times in a row.
+last=$(zfs list -Hp -t snapshot -o name,creation -s creation "$ds" 2>/dev/null |
+       awk -F'\t' '$1 ~ /@pacman-/ {t=$2} END {print t+0}')
+if [ $((now - last)) -ge 300 ]; then
+  name="$ds@pacman-$(date +%Y%m%d-%H%M%S)"
+  zfs snapshot "$name" 2>/dev/null && echo "snapshot ${name##*/} taken (constellation-be list)"
+fi
+zfs list -H -t snapshot -o name -s creation "$ds" 2>/dev/null | grep '@pacman-' | head -n "-$KEEP" |
+  while read -r old; do zfs destroy "$old" 2>/dev/null || true; done
+exit 0

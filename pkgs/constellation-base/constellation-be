@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+# constellation-be: boot environments on Constellation's OpenZFS root (ZFSBootMenu).
+#
+#   constellation-be list                    boot environments and snapshots
+#   constellation-be upgrade [--no-activate] update in a NEW boot environment (paru -Syu
+#                                            in a clone); the running system is never touched
+#   constellation-be snapshot [NAME]         snapshot the running system
+#   constellation-be create NAME [SNAPSHOT]  new boot environment from a snapshot (default: now)
+#   constellation-be activate NAME           boot NAME by default from now on
+#   constellation-be rollback SNAPSHOT       make a boot environment from SNAPSHOT and activate it
+#   constellation-be destroy NAME            delete a boot environment (not the running or default one)
+#
+# Nothing is changed in place: an upgrade or a rollback makes a new boot environment and
+# the current one stays in the ZFSBootMenu menu, so you can always boot back into it.
+set -Eeuo pipefail
+
+die() { printf 'constellation-be: %s\n' "$*" >&2; exit 1; }
+need_root() { [ "$(id -u)" -eq 0 ] || die "this changes the system; run: sudo constellation-be $*"; }
+
+[ "$(findmnt -no FSTYPE /)" = zfs ] || die 'the running system is not on ZFS'
+ROOT_DS=$(findmnt -no SOURCE /)              # e.g. zroot/ROOT/constellation
+PARENT=${ROOT_DS%/*}                         # zroot/ROOT
+POOL=${ROOT_DS%%/*}
+BOOTFS=$(zpool get -Ho value bootfs "$POOL")
+WORK=${CONSTELLATION_BE_WORK:-/run/constellation-be}
+
+valid_name() { [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ ]] || die "invalid name: $1"; }
+be() { case "$1" in */*) echo "$1" ;; *) echo "$PARENT/$1" ;; esac; }
+snap_of() {   # full snapshot name: NAME, BE@NAME or POOL/ROOT/BE@NAME
+  case "$1" in
+    */*@*) echo "$1" ;;
+    *@*) echo "$PARENT/$1" ;;
+    *) echo "$ROOT_DS@$1" ;;
+  esac
+}
+clone() {     # clone SNAPSHOT DATASET; canmount=noauto: two datasets mounting at / would not boot
+  zfs clone -o mountpoint=/ -o canmount=noauto "$1" "$2"
+}
+
+# The new environment must be able to boot: a kernel, its initramfs and a ZFS module for it.
+bootable() {
+  local root=$1 ok=0 k ver
+  for k in "$root"/boot/vmlinuz-*; do
+    [ -f "$k" ] || continue
+    ver=$(basename "$k"); ver=${ver#vmlinuz-}
+    [ -f "$root/boot/initramfs-$ver.img" ] || { echo "  missing initramfs for $ver"; ok=1; continue; }
+    local kdir
+    kdir=$(grep -l "^$ver\$" "$root"/usr/lib/modules/*/pkgbase 2>/dev/null | head -1 || true)
+    kdir=${kdir%/pkgbase}
+    if [ -z "$kdir" ] || ! find "$kdir" -name 'zfs.ko*' -print -quit | grep -q .; then
+      echo "  no ZFS module for the $ver kernel (OpenZFS may not support it yet)"; ok=1
+    else
+      echo "  $ver: kernel, initramfs and ZFS module present"
+    fi
+  done
+  return $ok
+}
+
+cmd=${1:-list}; shift || true
+case "$cmd" in
+  list)
+    printf 'Boot environments (in %s):\n' "$PARENT"
+    zfs list -H -d 1 -o name,used,creation "$PARENT" | while IFS=$'\t' read -r name used created; do
+      [ "$name" = "$PARENT" ] && continue
+      tags=''
+      [ "$name" = "$ROOT_DS" ] && tags="$tags running"
+      [ "$name" = "$BOOTFS" ] && tags="$tags default"
+      printf '  %-28s %8s  %s%s\n' "${name##*/}" "$used" "$created" "${tags:+  [${tags# }]}"
+    done
+    echo
+    printf 'Snapshots of %s (newest last):\n' "${ROOT_DS##*/}"
+    zfs list -H -t snapshot -o name,used,creation -s creation "$ROOT_DS" |
+      while IFS=$'\t' read -r name used created; do printf '  %-32s %8s  %s\n' "${name#*@}" "$used" "$created"; done
+    ;;
+  upgrade)
+    need_root upgrade "$@"
+    activate=1
+    [ "${1:-}" != --no-activate ] || activate=0
+    user=${SUDO_USER:-}
+    [ -n "$user" ] && [ "$user" != root ] || die 'run it as yourself with sudo (paru must not run as root)'
+    command -v arch-chroot >/dev/null || die 'arch-chroot is missing (pacman -S arch-install-scripts)'
+    name="upgrade-$(date +%Y%m%d-%H%M)" n=1
+    while zfs list "$PARENT/$name" >/dev/null 2>&1; do n=$((n + 1)); name="upgrade-$(date +%Y%m%d-%H%M)-$n"; done
+    target="$PARENT/$name" dir="$WORK/$name"
+    snap="$ROOT_DS@before-$name"
+    zfs snapshot "$snap"
+    clone "$snap" "$target"
+    mkdir -p "$dir"
+    cleanup() { umount -R "$dir" 2>/dev/null || umount -lR "$dir" 2>/dev/null || true; rmdir "$dir" 2>/dev/null || true; }
+    trap cleanup EXIT
+    mount -t zfs -o zfsutil "$target" "$dir"
+    mount --rbind /home "$dir/home"          # paru builds in your home; it is shared by every environment
+    mount --rbind /boot/efi "$dir/boot/efi" 2>/dev/null || true
+    echo "Updating in a new boot environment, $name. Your running system is not touched."
+    echo
+    if ! arch-chroot "$dir" runuser -u "$user" -- paru -Syu; then
+      echo
+      echo "The update failed inside $name. Nothing changed in your running system."
+      echo "Look inside it, or remove it: sudo constellation-be destroy $name"
+      exit 1
+    fi
+    echo
+    echo 'Checking the new environment can boot:'
+    if ! bootable "$dir"; then
+      echo
+      echo "Not activating $name: it might not boot. Your running system is still the default."
+      echo "Usually OpenZFS has not caught up with a new kernel yet; try again in a few days,"
+      echo "or boot $name once from the ZFSBootMenu menu to test it. Remove it: sudo constellation-be destroy $name"
+      exit 1
+    fi
+    if [ "$activate" -eq 1 ]; then
+      zpool set bootfs="$target" "$POOL"
+      echo
+      echo "$name is ready and will start from the next restart."
+      echo "If anything is wrong, choose ${ROOT_DS##*/} in the ZFSBootMenu menu (press Escape while it counts"
+      echo "down) or run: sudo constellation-be activate ${ROOT_DS##*/}"
+    else
+      echo
+      echo "$name is ready. Try it once from the ZFSBootMenu menu, then: sudo constellation-be activate $name"
+    fi
+    ;;
+  snapshot)
+    need_root snapshot "$@"
+    name=${1:-manual-$(date +%Y%m%d-%H%M%S)}; valid_name "$name"
+    zfs snapshot "$ROOT_DS@$name"
+    echo "snapshot: ${ROOT_DS##*/}@$name"
+    ;;
+  create)
+    need_root create "$@"
+    [ $# -ge 1 ] || die 'usage: constellation-be create NAME [SNAPSHOT]'
+    valid_name "$1"; target=$(be "$1")
+    zfs list "$target" >/dev/null 2>&1 && die "$1 already exists"
+    if [ $# -ge 2 ]; then snap=$(snap_of "$2"); else snap="$ROOT_DS@be-$1-$(date +%Y%m%d-%H%M%S)"; zfs snapshot "$snap"; fi
+    zfs list "$snap" >/dev/null 2>&1 || die "no such snapshot: $snap"
+    clone "$snap" "$target"
+    echo "boot environment $1 created from ${snap#"$PARENT"/}"
+    echo "Boot it once from the ZFSBootMenu menu, or make it the default: sudo constellation-be activate $1"
+    ;;
+  activate)
+    need_root activate "$@"
+    [ $# -eq 1 ] || die 'usage: constellation-be activate NAME'
+    target=$(be "$1"); zfs list "$target" >/dev/null 2>&1 || die "no such boot environment: $1"
+    zpool set bootfs="$target" "$POOL"
+    echo "$1 will start by default from the next restart."
+    ;;
+  rollback)
+    need_root rollback "$@"
+    [ $# -eq 1 ] || die 'usage: constellation-be rollback SNAPSHOT'
+    snap=$(snap_of "$1"); zfs list "$snap" >/dev/null 2>&1 || die "no such snapshot: $snap"
+    name="rollback-$(date +%Y%m%d-%H%M%S)"
+    clone "$snap" "$PARENT/$name"
+    zpool set bootfs="$PARENT/$name" "$POOL"
+    echo "Created boot environment $name from ${snap#"$PARENT"/} and made it the default."
+    echo "Restart to use it. Your current system (${ROOT_DS##*/}) is untouched and still in the boot menu."
+    ;;
+  destroy)
+    need_root destroy "$@"
+    [ $# -eq 1 ] || die 'usage: constellation-be destroy NAME'
+    target=$(be "$1")
+    [ "$target" != "$ROOT_DS" ] || die "$1 is the running system"
+    [ "$target" != "$BOOTFS" ] || die "$1 is the default; activate another one first"
+    zfs list "$target" >/dev/null 2>&1 || die "no such boot environment: $1"
+    zfs destroy "$target" || die "$1 has snapshots other boot environments were made from; destroy those first"
+    echo "destroyed $1"
+    ;;
+  -h|--help|help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) die "unknown command: $cmd (try constellation-be help)" ;;
+esac

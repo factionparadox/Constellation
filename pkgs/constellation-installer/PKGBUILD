@@ -1,0 +1,16 @@
+# The live USB's installer (not installed on the target system).
+pkgname=constellation-installer
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Constellation installer: whole-disk OpenZFS root with ZFSBootMenu'
+arch=('any')
+url='https://github.com/factionparadox/Constellation'
+license=('MIT')
+depends=('bash' 'arch-install-scripts' 'gptfdisk' 'dosfstools' 'efibootmgr' 'zfs-utils' 'util-linux')
+source=('constellation-install' 'packages.txt')
+sha256sums=('SKIP' 'SKIP')
+
+package() {
+  install -Dm0755 constellation-install "$pkgdir/usr/bin/constellation-install"
+  install -Dm0644 packages.txt "$pkgdir/usr/share/constellation/install/packages.txt"
+}

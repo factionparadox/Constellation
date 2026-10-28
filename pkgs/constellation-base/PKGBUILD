@@ -1,0 +1,35 @@
+# Constellation base system: boot environments, snapshots before every pacman change,
+# zram swap and sudo that remembers your password for two hours.
+pkgname=constellation-base
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Constellation base system: OpenZFS boot environments, pacman snapshots, zram, sudo defaults'
+arch=('any')
+url='https://github.com/factionparadox/Constellation'
+license=('MIT')
+depends=(
+  'base' 'sudo' 'zram-generator' 'arch-install-scripts' 'efibootmgr'
+  'zfs-utils' 'zfsbootmenu-efi' 'paru'
+  # birthDate-free systemd (see docs/SYSTEMD.md); Arch's own systemd is never used
+  'systemd-remove-birthdate'
+)
+backup=('etc/sudoers.d/10-constellation' 'etc/systemd/zram-generator.conf')
+source=('sudoers' 'zram-generator.conf' '99-constellation-zram.conf'
+        '00-constellation-snapshot.hook' 'pacman-snapshot' 'constellation-be'
+        '95-constellation-zfsbootmenu.hook' 'update-zfsbootmenu' '96-constellation-initramfs.hook'
+        '97-constellation-birthdate.hook' 'check-birthdate')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+  install -Dm0440 sudoers "$pkgdir/etc/sudoers.d/10-constellation"
+  install -Dm0644 zram-generator.conf "$pkgdir/etc/systemd/zram-generator.conf"
+  install -Dm0644 99-constellation-zram.conf "$pkgdir/usr/lib/sysctl.d/99-constellation-zram.conf"
+  install -Dm0644 00-constellation-snapshot.hook "$pkgdir/usr/share/libalpm/hooks/00-constellation-snapshot.hook"
+  install -Dm0755 pacman-snapshot "$pkgdir/usr/lib/constellation/pacman-snapshot"
+  install -Dm0755 constellation-be "$pkgdir/usr/bin/constellation-be"
+  install -Dm0644 95-constellation-zfsbootmenu.hook "$pkgdir/usr/share/libalpm/hooks/95-constellation-zfsbootmenu.hook"
+  install -Dm0755 update-zfsbootmenu "$pkgdir/usr/lib/constellation/update-zfsbootmenu"
+  install -Dm0644 96-constellation-initramfs.hook "$pkgdir/usr/share/libalpm/hooks/96-constellation-initramfs.hook"
+  install -Dm0644 97-constellation-birthdate.hook "$pkgdir/usr/share/libalpm/hooks/97-constellation-birthdate.hook"
+  install -Dm0755 check-birthdate "$pkgdir/usr/lib/constellation/check-birthdate"
+}

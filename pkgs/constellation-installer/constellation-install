@@ -1,0 +1,260 @@
+#!/usr/bin/env bash
+# constellation-install: install Constellation from the live USB onto a whole disk, with an
+# OpenZFS root (optionally encrypted), a separate /home and ZFSBootMenu as the boot loader.
+# Erases the chosen disk. Follows ZFSBootMenu's Arch Linux UEFI guide (docs.zfsbootmenu.org).
+#
+#   --disk DEV               disk to erase and install to (otherwise you choose from a list)
+#   --username NAME          first user (asked if not given)   --fullname "Full Name"
+#   --password-file FILE     the user's password, first line   (otherwise asked)
+#   --encrypt-passphrase-file FILE | --no-encrypt               (otherwise asked)
+#   --hostname NAME          (default: constellation)
+#   --timezone ZONE          (default: Europe/London)    --keymap MAP   (default: uk)
+#   --yes                    skip the "type the disk name" confirmation
+#   --dry-run                print every command instead of running it
+set -Eeuo pipefail
+
+POOL=zroot BE=constellation MNT=/mnt/constellation
+DISK='' USERNAME='' FULLNAME='' PASSWORD_FILE='' ENC_FILE='' ENCRYPT='' HOST=constellation
+TZ_NAME=Europe/London KEYMAP=uk YES=0 DRY=0
+SHARE=${CONSTELLATION_INSTALL_SHARE:-/usr/share/constellation/install}
+KEYFILE=/etc/zfs/$POOL.key
+
+die() { printf '\nconstellation-install: %s\n' "$*" >&2; exit 1; }
+say() { printf '\n==> %s\n' "$*"; }
+run() { if [ "$DRY" -eq 1 ]; then printf '+ %s\n' "$*"; else "$@"; fi; }
+in_target() { run arch-chroot "$MNT" "$@"; }
+write() {      # write FILE: stdin becomes FILE (or is shown, in a dry run)
+  if [ "$DRY" -eq 1 ]; then printf '+ write %s:\n' "$1"; sed 's/^/    /'; else cat > "$1"; fi
+}
+usage() { sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --disk) DISK=$2; shift 2 ;;
+    --username) USERNAME=$2; shift 2 ;;
+    --fullname) FULLNAME=$2; shift 2 ;;
+    --password-file) PASSWORD_FILE=$2; shift 2 ;;
+    --encrypt-passphrase-file) ENC_FILE=$2; ENCRYPT=1; shift 2 ;;
+    --no-encrypt) ENCRYPT=0; shift ;;
+    --hostname) HOST=$2; shift 2 ;;
+    --timezone) TZ_NAME=$2; shift 2 ;;
+    --keymap) KEYMAP=$2; shift 2 ;;
+    --yes) YES=1; shift ;;
+    --dry-run) DRY=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
+
+# Partition N of a disk: /dev/sda -> /dev/sda1, /dev/nvme0n1 -> /dev/nvme0n1p1
+part() { case "$1" in *[0-9]) echo "${1}p$2" ;; *) echo "$1$2" ;; esac; }
+valid_user() { [[ "$1" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] && [ "$1" != root ]; }
+valid_host() { [[ "$1" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]]; }
+
+ask_secret() {   # ask_secret PROMPT MINLEN -> prints the secret
+  local a b
+  while :; do
+    read -rsp "$1: " a || die 'no input'; echo >&2
+    read -rsp 'Again: ' b || die 'no input'; echo >&2
+    if [ "$a" != "$b" ]; then echo 'They did not match; try again.' >&2
+    elif [ "${#a}" -lt "$2" ]; then echo "Use at least $2 characters." >&2
+    else printf '%s' "$a"; return; fi
+  done
+}
+
+live_medium_disk() {     # the USB stick the live system runs from, so it is never offered
+  local src
+  src=$(findmnt -no SOURCE /run/archiso/bootmnt 2>/dev/null) || return 0
+  [ -n "$src" ] && lsblk -no PKNAME "$src" 2>/dev/null | head -1
+}
+
+packages() {   # the package list, plus the birthDate-free systemd family
+  grep -v -E '^\s*(#|$)' "$SHARE/packages.txt"
+  [ ! -f "$SHARE/systemd-packages.txt" ] || grep -v -E '^\s*(#|$)' "$SHARE/systemd-packages.txt"
+}
+
+# ------------------------------------------------------------------ checks
+if [ "$DRY" -eq 0 ]; then
+  [ "$(id -u)" -eq 0 ] || die 'run with sudo'
+  [ -d /sys/firmware/efi ] || die 'this computer did not start in UEFI mode; ZFSBootMenu needs UEFI'
+  [ -d /run/archiso ] || die 'run this from the Constellation live USB, not an installed system'
+  modprobe zfs 2>/dev/null && command -v zpool >/dev/null || die 'OpenZFS is not available in this live system'
+  for t in sgdisk mkfs.fat efibootmgr pacstrap arch-chroot zgenhostid wipefs partprobe udevadm; do
+    command -v "$t" >/dev/null || die "missing tool: $t"
+  done
+  zpool list "$POOL" >/dev/null 2>&1 && die "a pool called $POOL is already imported; export it first"
+  for f in systemd-packages.txt pacman-live.conf pacman.conf; do
+    [ -f "$SHARE/$f" ] || die "$SHARE/$f is missing; this live USB was not built by build/build-iso.sh"
+  done
+fi
+
+# ------------------------------------------------------------------ questions
+echo 'Constellation installer: OpenZFS root, separate /home, ZFSBootMenu boot environments.'
+echo 'The disk you choose will be ERASED completely.'
+
+if [ -z "$DISK" ]; then
+  live=$(live_medium_disk || true)
+  mapfile -t disks < <(lsblk -dpno NAME,TYPE,SIZE,MODEL | awk '$2 == "disk" {print}' |
+                       grep -v -E '/dev/(loop|zram|sr)' | { if [ -n "$live" ]; then grep -v "^/dev/$live "; else cat; fi })
+  [ ${#disks[@]} -gt 0 ] || die 'no disks found (the live USB itself is never offered)'
+  echo; for i in "${!disks[@]}"; do printf '  %d) %s\n' $((i + 1)) "${disks[$i]}"; done
+  read -rp 'Install to which disk (number)? ' n || n=''
+  [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -ge 1 ] && [ "$n" -le ${#disks[@]} ] || die 'no disk chosen'
+  DISK=$(awk '{print $1}' <<< "${disks[$((n - 1))]}")
+fi
+[ "$DRY" -eq 1 ] || [ -b "$DISK" ] || die "$DISK is not a disk"
+
+until [ -n "$USERNAME" ] && valid_user "$USERNAME"; do
+  [ -z "$USERNAME" ] || echo 'Use lower-case letters, digits, - and _ (not root).'
+  read -rp 'Your user name (e.g. stephen): ' USERNAME || die 'no user name given'
+done
+[ -n "$FULLNAME" ] || read -rp 'Your full name (optional): ' FULLNAME || true
+valid_host "$HOST" || die "invalid host name: $HOST"
+[ "$DRY" -eq 1 ] || [ -f "/usr/share/zoneinfo/$TZ_NAME" ] || die "unknown time zone: $TZ_NAME"
+if [ -n "$PASSWORD_FILE" ]; then PASSWORD=$(head -1 "$PASSWORD_FILE"); else PASSWORD=$(ask_secret "Password for $USERNAME" 1); fi
+[ -n "$PASSWORD" ] || die 'empty password'
+
+if [ -z "$ENCRYPT" ]; then
+  read -rp 'Encrypt the disk? You will type a passphrase at every start-up. [y/N] ' a || a=n
+  case "$a" in [yY]*) ENCRYPT=1 ;; *) ENCRYPT=0 ;; esac
+fi
+if [ "$ENCRYPT" -eq 1 ]; then
+  if [ -n "$ENC_FILE" ]; then PASSPHRASE=$(head -1 "$ENC_FILE"); else PASSPHRASE=$(ask_secret 'Disk encryption passphrase' 8); fi
+  [ "${#PASSPHRASE}" -ge 8 ] || die 'the encryption passphrase must be at least 8 characters'
+fi
+
+ESP=$(part "$DISK" 1) ZPART=$(part "$DISK" 2)
+cat <<EOF
+
+  Disk:        $DISK (ERASED)
+  Partitions:  $ESP  1 GB EFI system partition (ZFSBootMenu)
+               $ZPART  the rest: ZFS pool "$POOL"
+  Datasets:    $POOL/ROOT/$BE  (/, the boot environment)   $POOL/home  (/home)
+               $POOL/data/constellation, $POOL/data/ollama  (downloads, shared by every boot environment)
+  Encryption:  $([ "$ENCRYPT" -eq 1 ] && echo 'yes (aes-256-gcm, passphrase at start-up)' || echo no)
+  User:        $USERNAME${FULLNAME:+ ($FULLNAME)}, administrator (sudo remembers your password for 2 hours)
+  Host name:   $HOST     Time zone: $TZ_NAME     Keyboard: $KEYMAP
+  Swap:        compressed RAM (zram); no swap partition
+
+EOF
+if [ "$YES" -ne 1 ]; then
+  read -rp "Type $(basename "$DISK") to erase it and install: " confirm || confirm=''
+  [ "$confirm" = "$(basename "$DISK")" ] || die 'not confirmed; nothing was changed'
+fi
+
+trap 'echo; echo "constellation-install: stopped at line $LINENO. The disk may be half-installed; run the installer again to start over." >&2' ERR
+
+# ------------------------------------------------------------------ disk
+say 'Erasing the disk and creating partitions'
+run zpool labelclear -f "$DISK" 2>/dev/null || true
+run wipefs -a "$DISK"
+run sgdisk --zap-all "$DISK"
+run sgdisk -n 1:1m:+1g -t 1:ef00 -c 1:EFI "$DISK"
+run sgdisk -n 2:0:-10m -t 2:bf00 -c 2:"$POOL" "$DISK"
+run partprobe "$DISK" || true
+run udevadm settle
+run mkfs.fat -F 32 -n CONSTELLATN "$ESP"
+
+say 'Creating the ZFS pool and datasets'
+run zgenhostid -f
+encopts=()
+if [ "$ENCRYPT" -eq 1 ]; then
+  run install -d -m 0755 /etc/zfs
+  if [ "$DRY" -eq 1 ]; then echo "+ (write the passphrase to $KEYFILE, mode 000)"
+  else (umask 077; printf '%s' "$PASSPHRASE" > "$KEYFILE"); chmod 000 "$KEYFILE"; fi
+  encopts=(-O encryption=aes-256-gcm -O keylocation="file://$KEYFILE" -O keyformat=passphrase)
+fi
+# compatibility=openzfs-2.3-linux keeps the pool readable by ZFSBootMenu's own OpenZFS.
+run zpool create -f -o ashift=12 -o autotrim=on -o compatibility=openzfs-2.3-linux \
+  -O compression=zstd -O acltype=posixacl -O xattr=sa -O relatime=on -O dnodesize=auto \
+  "${encopts[@]}" -m none "$POOL" "$ZPART"
+run zfs create -o mountpoint=none "$POOL/ROOT"
+run zfs create -o mountpoint=/ -o canmount=noauto "$POOL/ROOT/$BE"
+run zfs create -o mountpoint=/home "$POOL/home"
+# Shared by every boot environment, so a rollback never loses downloads and snapshots stay small.
+run zfs create -o mountpoint=none "$POOL/data"
+run zfs create -o mountpoint=/var/lib/constellation "$POOL/data/constellation"
+run zfs create -o mountpoint=/var/lib/ollama -o recordsize=1M "$POOL/data/ollama"
+run zpool set bootfs="$POOL/ROOT/$BE" "$POOL"
+run zpool export "$POOL"
+run zpool import -N -R "$MNT" "$POOL"
+[ "$ENCRYPT" -eq 0 ] || run zfs load-key "$POOL"
+run zfs mount "$POOL/ROOT/$BE"
+run zfs mount "$POOL/home"
+run zfs mount "$POOL/data/constellation"
+run zfs mount "$POOL/data/ollama"
+run udevadm trigger
+run install -d "$MNT/boot/efi"
+run mount "$ESP" "$MNT/boot/efi"
+
+say 'Installing Constellation (downloads packages; this takes a while)'
+mapfile -t pkgs < <(packages)
+# The birthDate-free systemd is installed in the same step as base, so Arch's systemd never is.
+# Not -K: pacstrap copies the live system's keyring, which already trusts Constellation's
+# signing key, so Constellation's own packages verify.
+run pacstrap -C "$SHARE/pacman-live.conf" "$MNT" "${pkgs[@]}"
+
+say 'Configuring the installed system'
+run cp "$SHARE/pacman.conf" "$MNT/etc/pacman.conf"     # Arch's mirrors and Constellation's repository
+run install -d -m 0755 "$MNT/etc/zfs"
+run cp /etc/hostid "$MNT/etc/hostid"
+run zpool set cachefile=/etc/zfs/zpool.cache "$POOL"
+run cp /etc/zfs/zpool.cache "$MNT/etc/zfs/zpool.cache"
+[ "$ENCRYPT" -eq 0 ] || run cp -p "$KEYFILE" "$MNT$KEYFILE"
+printf 'UUID=%s /boot/efi vfat umask=0077 0 2\n' "$( [ "$DRY" -eq 1 ] && echo ESP-UUID || blkid -s UUID -o value "$ESP")" |
+  write "$MNT/etc/fstab"
+echo "$HOST" | write "$MNT/etc/hostname"
+printf '127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t%s\n' "$HOST" | write "$MNT/etc/hosts"
+run install -d "$MNT/etc/mkinitcpio.conf.d"
+printf 'en_GB.UTF-8 UTF-8\nru_RU.UTF-8 UTF-8\nen_US.UTF-8 UTF-8\n' | write "$MNT/etc/locale.gen"
+echo 'LANG=en_GB.UTF-8' | write "$MNT/etc/locale.conf"
+echo "KEYMAP=$KEYMAP" | write "$MNT/etc/vconsole.conf"
+run ln -sf "/usr/share/zoneinfo/$TZ_NAME" "$MNT/etc/localtime"
+in_target locale-gen
+in_target hwclock --systohc
+
+# mkinitcpio: the busybox-based zfs hook (OpenZFS has no systemd-initramfs hook).
+{
+  echo '# Constellation: OpenZFS root (zfs hook), set by constellation-install.'
+  echo 'HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block zfs filesystems)'
+  [ "$ENCRYPT" -eq 0 ] || echo "FILES=($KEYFILE)"
+} | write "$MNT/etc/mkinitcpio.conf.d/10-constellation-zfs.conf"
+if [ "$ENCRYPT" -eq 1 ]; then
+  # ZFSBootMenu asks for the passphrase once and hands the key to the system it boots.
+  run zfs set org.zfsbootmenu:keysource="$POOL/ROOT/$BE" "$POOL"
+fi
+run zfs set org.zfsbootmenu:commandline="rw quiet loglevel=3" "$POOL/ROOT"
+in_target mkinitcpio -P
+# With encryption the initramfs holds the key file: only root may read it.
+[ "$ENCRYPT" -eq 0 ] || run chmod 600 "$MNT"/boot/initramfs-*.img
+
+in_target systemctl enable zfs-import-cache.service zfs-import.target zfs-mount.service zfs.target \
+  NetworkManager.service systemd-timesyncd.service greetd.service bluetooth.service \
+  power-profiles-daemon.service ollama.service
+
+in_target sh -c 'getent passwd ollama >/dev/null && chown ollama:ollama /var/lib/ollama || true'
+
+say "Creating your account, $USERNAME"
+in_target useradd -m -G wheel -s /usr/bin/fish -c "$FULLNAME" "$USERNAME"
+if [ "$DRY" -eq 1 ]; then echo "+ (set the password for $USERNAME)"
+else printf '%s:%s\n' "$USERNAME" "$PASSWORD" | arch-chroot "$MNT" chpasswd; fi
+in_target passwd -l root      # administration is through sudo
+
+say 'Installing ZFSBootMenu'
+run env CONSTELLATION_ESP="$MNT/boot/efi" "$MNT/usr/lib/constellation/update-zfsbootmenu"
+run efibootmgr -c -d "$DISK" -p 1 -L 'Constellation (ZFSBootMenu, backup)' -l '\EFI\ZBM\VMLINUZ-BACKUP.EFI'
+run efibootmgr -c -d "$DISK" -p 1 -L 'Constellation (ZFSBootMenu)' -l '\EFI\ZBM\VMLINUZ.EFI'
+
+say 'Finishing'
+run zfs snapshot "$POOL/ROOT/$BE@installed"
+run umount -n -R "$MNT"
+run zpool export "$POOL"
+trap - ERR
+cat <<EOF
+
+Constellation is installed on $DISK.
+Remove the USB stick and restart. ZFSBootMenu starts first$([ "$ENCRYPT" -eq 1 ] && echo ', asks for your disk passphrase,') and boots Constellation.
+
+Update with:  sudo constellation-be upgrade    (updates a copy; your running system is never touched)
+The snapshot "installed" is your first rollback point: constellation-be list
+EOF

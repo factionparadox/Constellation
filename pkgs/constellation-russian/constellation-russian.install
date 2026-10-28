@@ -1,0 +1,4 @@
+post_install() {
+  systemctl enable --now ollama.service 2>/dev/null || true
+  echo 'Russian: start with  constellation-russian path ; download material with  sudo constellation-content'
+}

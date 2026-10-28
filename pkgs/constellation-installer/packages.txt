@@ -1,0 +1,20 @@
+# Installed by constellation-install with pacstrap. One package per line; # comments.
+# The birthDate-free systemd family replaces Arch's systemd (listed by build/build-repo.sh
+# in systemd-packages.txt, which the installer adds to this list).
+base
+linux-lts
+linux-lts-headers
+linux-firmware
+intel-ucode
+zfs-dkms
+zfs-utils
+constellation-base
+constellation-desktop
+constellation-russian
+networkmanager
+sudo
+fish
+nano
+neovim
+man-db
+man-pages

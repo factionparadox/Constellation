@@ -1,0 +1,15 @@
+name: Check pinned packages
+# Daily: fails (and GitHub emails you) when Arch's systemd is newer than Constellation's
+# birthDate-free systemd, and lists AUR packages with new commits to review.
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - run: pacman -Syu --noconfirm git
+      - uses: actions/checkout@v4
+      - run: build/check-updates.sh

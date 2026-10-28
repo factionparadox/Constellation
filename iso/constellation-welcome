@@ -1,0 +1,19 @@
+#!/bin/sh
+cat <<'TXT'
+Созвездие / Constellation
+
+Installing erases one whole disk and gives you:
+  * an OpenZFS root with boot environments: updates go into a copy of the system
+    (sudo constellation-be upgrade), so a bad update never touches the one you are using
+  * ZFSBootMenu to boot any boot environment or snapshot
+  * niri and the Caelestia shell, the birthDate-free systemd, zram instead of swap
+  * the Russian kit (constellation-russian; downloads with constellation-content)
+
+1. Connect to the internet (Ethernet works by itself). For Wi-Fi:
+       iwctl station wlan0 scan
+       iwctl station wlan0 get-networks
+       iwctl station wlan0 connect "Network name"
+2. Check the computer started in UEFI mode:  ls /sys/firmware/efi
+3. Install:  constellation-install
+   Rehearse first, changing nothing:  constellation-install --dry-run
+TXT

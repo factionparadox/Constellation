@@ -1,0 +1,5 @@
+# Constellation: type your password once and sudo trusts you for two hours, in every
+# terminal (timestamp_type=global), not just the one you typed it in.
+Defaults timestamp_timeout=120
+Defaults timestamp_type=global
+%wheel ALL=(ALL:ALL) ALL

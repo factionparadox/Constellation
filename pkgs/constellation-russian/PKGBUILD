@@ -1,0 +1,34 @@
+# Russian from the alphabet to B2: the study tool, the 10,000-word drill, the Piper speech
+# engine and the downloader for the tutor, voices, courses, audiobooks and dictionaries.
+pkgname=constellation-russian
+pkgver=0.1.0
+pkgrel=1
+_piper=2023.11.14-2
+pkgdesc='Constellation Russian kit: AI tutor, word drill, speech, courses and offline reading'
+arch=('x86_64')
+url='https://github.com/factionparadox/Constellation'
+license=('MIT' 'CC-BY-SA-4.0')     # the word list is derived from CC BY-SA sources (VOCAB-SOURCES.md)
+depends=('python' 'ollama' 'kiwix-desktop' 'yt-dlp' 'mpv' 'pipewire' 'xdg-utils')
+install=constellation-russian.install
+source=('constellation-russian' 'constellation-content'
+        'fetch-files.py' 'fetch-kiwix.py' 'fetch-archive.py' 'fetch-mezhdunami.py' 'fetch-mirror.py'
+        'vocab.tsv' 'library.tsv' 'audiobooks.tsv' 'voices.tsv' 'VOCAB-SOURCES.md' 'mirror.json'
+        'constellation-russian-words.desktop' 'constellation-russian-tutor.desktop'
+        "piper-$_piper.tar.gz::https://github.com/rhasspy/piper/releases/download/$_piper/piper_linux_x86_64.tar.gz")
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
+            'SKIP' 'SKIP'
+            'a50cb45f355b7af1f6d758c1b360717877ba0a398cc8cbe6d2a7a3a26e225992')
+
+package() {
+  install -Dm0755 constellation-russian "$pkgdir/usr/bin/constellation-russian"
+  install -Dm0755 constellation-content "$pkgdir/usr/bin/constellation-content"
+  install -d "$pkgdir/usr/lib/constellation/content" "$pkgdir/usr/share/constellation/russian"
+  install -m0644 fetch-*.py mirror.json "$pkgdir/usr/lib/constellation/content/"
+  install -m0644 vocab.tsv library.tsv audiobooks.tsv voices.tsv VOCAB-SOURCES.md \
+    "$pkgdir/usr/share/constellation/russian/"
+  install -Dm0644 -t "$pkgdir/usr/share/applications" constellation-russian-*.desktop
+  # Piper (MIT), with its own libraries and espeak-ng data, kept out of the system's.
+  install -d "$pkgdir/usr/lib/constellation"
+  cp -a piper "$pkgdir/usr/lib/constellation/piper"
+  install -d -m0755 "$pkgdir/var/lib/constellation/russian"
+}

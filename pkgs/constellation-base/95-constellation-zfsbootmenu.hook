@@ -1,0 +1,11 @@
+# Keep the ZFSBootMenu on the EFI partition up to date when the package changes.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Path
+Target = usr/share/zfsbootmenu/VMLINUZ.EFI
+
+[Action]
+Description = Updating ZFSBootMenu on the EFI partition...
+When = PostTransaction
+Exec = /usr/lib/constellation/update-zfsbootmenu

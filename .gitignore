@@ -1,0 +1,11 @@
+/work/
+/out/
+__pycache__/
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+pkgs/*/src/
+pkgs/*/pkg/
+pkgs/*/*.tar.gz
+pkgs/*/*.EFI
+pkgs/niri-caelestia-shell/niri-caelestia-shell/
+pkgs/zfsbootmenu-efi/LICENSE

@@ -1,0 +1,13 @@
+# After any change to systemd, check its user-record code has no birthDate field.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Path
+Target = usr/lib/systemd/libsystemd-shared-*.so
+Target = usr/bin/userdbctl
+Target = usr/bin/homectl
+
+[Action]
+Description = Checking systemd has no birthDate field...
+When = PostTransaction
+Exec = /usr/lib/constellation/check-birthdate

@@ -1,0 +1,13 @@
+# Snapshot the ZFS root before pacman changes anything, so every update can be undone
+# from ZFSBootMenu or with constellation-be. Never blocks pacman.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Snapshotting the system before changing packages...
+When = PreTransaction
+Exec = /usr/lib/constellation/pacman-snapshot

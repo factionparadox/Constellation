@@ -1,0 +1,11 @@
+#!/bin/sh
+# Start the Caelestia shell under niri, restarting it if it crashes (but not in a loop).
+export QS_DISABLE_CRASH_HANDLER=1
+log="${XDG_STATE_HOME:-$HOME/.local/state}/constellation/shell.log"
+mkdir -p "$(dirname "$log")"
+n=0
+while [ "$n" -lt 5 ]; do
+  qs -c niri-caelestia-shell -n >>"$log" 2>&1 && exit 0
+  n=$((n + 1)); sleep 2
+done
+notify-send -u critical 'Constellation' "The desktop shell keeps crashing; see $log"

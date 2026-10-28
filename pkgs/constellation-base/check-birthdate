@@ -1,0 +1,15 @@
+#!/bin/sh
+# Warn loudly if the installed systemd carries the birthDate user-record field (docs/SYSTEMD.md).
+found=''
+for f in /usr/lib/systemd/libsystemd-shared-*.so /usr/bin/userdbctl /usr/bin/homectl \
+         /usr/lib/systemd/systemd-userdbd /usr/lib/systemd/systemd-homed; do
+  [ -f "$f" ] && grep -q birthDate "$f" && found="$found $f"
+done
+if [ -n "$found" ]; then
+  echo "  WARNING: systemd with the birthDate field is installed:$found"
+  echo "  This is not Constellation's systemd. Reinstall it: sudo pacman -S systemd-remove-birthdate"
+  echo "  or boot the previous boot environment from ZFSBootMenu."
+else
+  echo "  systemd has no birthDate field"
+fi
+exit 0
