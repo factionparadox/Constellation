@@ -1,7 +1,7 @@
-# Constellation: a text login screen that starts niri.
+# Constellation: the graphical login screen (falls back to a text one if it cannot start).
 [terminal]
 vt = 1
 
 [default_session]
-command = "tuigreet --time --remember --asterisks --greeting 'Созвездие / Constellation' --cmd niri-session"
+command = "/usr/lib/constellation/greeter"
 user = "greeter"

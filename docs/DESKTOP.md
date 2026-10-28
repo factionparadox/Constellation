@@ -1,6 +1,6 @@
 # Desktop
 
-niri, a scrolling tiling compositor: windows open side by side in an endless strip and you scroll along it, instead of being squeezed into the screen. The Caelestia shell (its niri port by Cantfirmed, pinned in `pkgs/niri-caelestia-shell`) draws the bar, launcher, dashboard, notifications, lock screen and power menu. Login is greetd with tuigreet. Configuration: `/etc/niri/config.kdl` (copy it to `~/.config/niri/` to change it) and `~/.config/caelestia/shell.json`.
+niri, a scrolling tiling compositor: windows open side by side in an endless strip and you scroll along it, instead of being squeezed into the screen. The Caelestia shell (its niri port by Cantfirmed, pinned in `pkgs/niri-caelestia-shell`) draws the bar, launcher, dashboard, notifications, lock screen and power menu. Login is greetd with Constellation's own graphical login screen (`/usr/share/constellation/greeter`, made with Quickshell like the shell): the boot menu's blue and gold, the clock, the date in Russian and English, and Leo in the corner. If it ever fails to start, the text login screen (tuigreet) takes over, so you can always log in; its log is `/var/cache/constellation-greeter/greeter.log`. Preview it from a desktop session with `CONSTELLATION_GREETER_PREVIEW=1 qs -p /usr/share/constellation/greeter/shell.qml` (any password but "wrong" succeeds). Configuration: `/etc/niri/config.kdl` (copy it to `~/.config/niri/` to change it) and `~/.config/caelestia/shell.json`.
 
 | Keys | Action |
 | --- | --- |

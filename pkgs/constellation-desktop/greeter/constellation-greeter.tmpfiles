@@ -1,0 +1,2 @@
+# The login screen's own folder: who logged in last, and its log.
+d /var/cache/constellation-greeter 0755 greeter greeter -

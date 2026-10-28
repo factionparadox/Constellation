@@ -18,12 +18,16 @@ depends=(
   # apps
   'kitty' 'fish' 'dolphin' 'firefox' 'discord' 'vlc' 'vlc-plugins-all' 'ani-cli' 'proton-vpn-gtk-app'
   'grim' 'slurp' 'swappy' 'mpv' 'fastfetch' 'btop'
-  # fonts
+  # fonts (Inter and Material Symbols for the login screen, as on the boot menu)
+  'inter-font' 'ttf-material-symbols-rounded' 'quickshell-git'
   'noto-fonts' 'noto-fonts-cjk' 'noto-fonts-emoji' 'ttf-jetbrains-mono-nerd'
 )
 install=constellation-desktop.install
-source=('config.kdl' 'start-shell' 'greetd.toml' 'greetd-constellation.conf' 'shell.json' 'wallpaper.png')
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+source=('config.kdl' 'start-shell' 'greetd.toml' 'greetd-constellation.conf' 'shell.json' 'wallpaper.png'
+        'greeter/shell.qml' 'greeter/Greeter.qml' 'greeter/Sky.qml' 'greeter/niri.kdl'
+        'greeter/constellation-greeter' 'greeter/constellation-greeter.tmpfiles')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
+            'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
   install -Dm0644 config.kdl "$pkgdir/etc/niri/config.kdl"
@@ -31,5 +35,11 @@ package() {
   install -Dm0644 greetd.toml "$pkgdir/etc/greetd/constellation.toml"
   install -Dm0644 greetd-constellation.conf "$pkgdir/usr/lib/systemd/system/greetd.service.d/constellation.conf"
   install -Dm0644 shell.json "$pkgdir/etc/skel/.config/caelestia/shell.json"
+  # the graphical login screen
+  for f in shell.qml Greeter.qml Sky.qml niri.kdl; do
+    install -Dm0644 "$f" "$pkgdir/usr/share/constellation/greeter/$f"
+  done
+  install -Dm0755 constellation-greeter "$pkgdir/usr/lib/constellation/greeter"
+  install -Dm0644 constellation-greeter.tmpfiles "$pkgdir/usr/lib/tmpfiles.d/constellation-greeter.conf"
   install -Dm0644 wallpaper.png "$pkgdir/usr/share/backgrounds/constellation/constellation.png"
 }
