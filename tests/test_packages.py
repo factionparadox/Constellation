@@ -22,7 +22,7 @@ class PackageTests(unittest.TestCase):
             sources, sums = array(text, 'source'), array(text, 'sha256sums')
             self.assertEqual(len(sources), len(sums), pkgbuild)
             for s in sources:
-                if '://' in s or '::' in s:
+                if '://' in s or '::' in s or s.startswith('git+'):
                     continue
                 self.assertTrue((pkgbuild.parent / s).is_file(), f'{pkgbuild.parent.name}: {s}')
             pkgname = re.search(r'^pkgname=(\S+)', text, re.M).group(1)
@@ -41,6 +41,7 @@ class PackageTests(unittest.TestCase):
     def test_build_order_covers_every_package(self):
         build = (ROOT / 'build/build-repo.sh').read_text()
         own = re.search(r'^OWN=\((.*?)\)', build, re.M).group(1).split()
+        own += re.search(r'^FIRST=\((.*?)\)', build, re.M).group(1).split()
         self.assertEqual(sorted(own), sorted(p.parent.name for p in PKGS.glob('*/PKGBUILD')))
 
     def test_dependencies_come_from_the_lock_or_constellation(self):

@@ -1,0 +1,20 @@
+# ani-cli, pinned to a reviewed upstream release (on the AUR only; packaged here instead).
+pkgname=ani-cli
+pkgver=5.1
+pkgrel=1
+_commit=c99221dcecb35c66815a7a77e5ebebde16c8d06a   # tag v5.1
+pkgdesc='A command-line tool to browse and watch anime'
+arch=('any')
+url='https://github.com/pystardust/ani-cli'
+license=('GPL-3.0-or-later')
+depends=('grep' 'sed' 'curl' 'fzf' 'mpv' 'yt-dlp' 'ffmpeg' 'patch')
+optdepends=('vlc: alternative player (ANI_CLI_PLAYER=vlc)')
+source=("git+$url.git#commit=$_commit")
+sha256sums=('SKIP')   # git source pinned to a commit
+
+package() {
+  cd ani-cli
+  install -Dm0755 ani-cli "$pkgdir/usr/bin/ani-cli"
+  install -Dm0644 ani-cli.1 "$pkgdir/usr/share/man/man1/ani-cli.1"
+  install -Dm0644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

@@ -1,0 +1,25 @@
+# Material You colour generation, used by caelestia-cli for the shell's colour schemes.
+# On the AUR only; packaged here from a reviewed upstream release instead.
+pkgname=python-materialyoucolor
+pkgver=3.0.2
+pkgrel=1
+_commit=25fcd947db53cd8719301d01dbec6e6e707131fa   # tag v3.0.2
+pkgdesc='Material You colour generation algorithms for Python'
+arch=('x86_64')
+url='https://github.com/T-Dynamos/materialyoucolor-python'
+license=('MIT')
+depends=('python' 'python-pillow')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools' 'python-wheel' 'pybind11')
+source=("git+$url.git#commit=$_commit")
+sha256sums=('SKIP')   # git source pinned to a commit
+
+build() {
+  cd materialyoucolor-python
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd materialyoucolor-python
+  python -m installer --destdir="$pkgdir" dist/*.whl
+  install -Dm0644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

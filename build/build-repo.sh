@@ -15,9 +15,11 @@ OUT=$REPO/out/repo WORK=${CONSTELLATION_WORK:-$REPO/work} UNSIGNED=0 ONLY=()
 AUR=${CONSTELLATION_AUR_URL:-https://aur.archlinux.org}
 GPGKEY=${CONSTELLATION_GPGKEY:-}
 DB=constellation
+# Built before the AUR packages, because some of those depend on them.
+FIRST=(python-materialyoucolor)
 # Constellation's own packages, in build order. Data-only ones need no chroot.
-OWN=(zfsbootmenu-efi constellation-base ttf-material-symbols-rounded niri-caelestia-shell constellation-desktop constellation-russian constellation-installer)
-COMPILED=(niri-caelestia-shell)
+OWN=(ani-cli zfsbootmenu-efi constellation-base ttf-material-symbols-rounded niri-caelestia-shell constellation-desktop constellation-russian constellation-installer)
+COMPILED=(python-materialyoucolor niri-caelestia-shell)
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -89,6 +91,13 @@ build() {      # build NAME DIR CHROOT(0|1)
   fi
   publish "$dir"
 }
+
+# ------------------------------------------------------------------ dependencies of AUR packages
+for name in "${FIRST[@]}"; do
+  wanted "$name" || continue
+  compiled "$name" && c=1 || c=0
+  build "$name" "$REPO/pkgs/$name" "$c"
+done
 
 # ------------------------------------------------------------------ AUR packages (reviewed, pinned)
 while read -r name commit src; do
