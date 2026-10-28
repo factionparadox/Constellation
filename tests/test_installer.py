@@ -20,11 +20,11 @@ class InstallerDryRun(unittest.TestCase):
         self.pw = base / 'pw'; self.pw.write_text('secret\n')
         self.key = base / 'key'; self.key.write_text('correct horse battery\n')
 
-    def install(self, *extra):
+    def install(self, *extra, env=None):
         r = subprocess.run(['bash', str(PKG / 'constellation-install'), '--dry-run', '--yes', '--disk', '/dev/nvme0n1',
                             '--username', 'stephen', '--fullname', 'Stephen', '--password-file', str(self.pw), *extra],
-                           capture_output=True, text=True, env={**os.environ, 'CONSTELLATION_INSTALL_SHARE': str(self.share)},
-                           input='')
+                           capture_output=True, text=True, input='',
+                           env={**os.environ, 'CONSTELLATION_INSTALL_SHARE': str(self.share), **(env or {})})
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         return r.stdout
 
@@ -48,6 +48,23 @@ class InstallerDryRun(unittest.TestCase):
         self.assertIn('zfs set org.zfsbootmenu:commandline=rw quiet loglevel=3 zroot/ROOT', out)
         self.assertIn("efibootmgr -c -d /dev/nvme0n1 -p 1 -L Constellation (ZFSBootMenu)", out)
         self.assertIn('zfs snapshot zroot/ROOT/constellation@installed', out)
+
+    def test_installs_from_the_usb_stick_only(self):
+        out = self.install('--no-encrypt')
+        pacstrap = next(l for l in out.splitlines() if l.startswith('+ pacstrap'))
+        self.assertIn(f'-C {self.share}/pacman-live.conf', pacstrap)
+        self.assertIn(' base-devel', pacstrap)                   # for paru
+        self.assertIn('no network needed', out)
+
+    def test_content_packs_on_the_stick_are_copied(self):
+        content = Path(self.tmp.name) / 'content'
+        (content / 'ru-voices').mkdir(parents=True)
+        out = self.install('--no-encrypt', env={'CONSTELLATION_INSTALL_CONTENT': str(content)})
+        self.assertIn(f'+ cp -a {content}/ru-voices /mnt/constellation/var/lib/constellation/russian/voices', out)
+        self.assertIn('constellation-content refresh', out)
+        self.assertNotIn('ru-audiobooks', out)
+        out = self.install('--no-encrypt', env={'CONSTELLATION_INSTALL_CONTENT': str(content / 'none')})
+        self.assertNotIn('constellation-content refresh', out)
 
     def test_encrypted_install_keeps_the_key_in_the_initramfs_only(self):
         out = self.install('--encrypt-passphrase-file', str(self.key))

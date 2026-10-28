@@ -17,13 +17,14 @@ The name comes from Fabergé's Constellation Egg of 1917, the last of the Imperi
 | systemd | A rebuilt systemd with the `birthDate` user-record field removed, in place of Arch's, from the first install step; a daily check flags when Arch's systemd moves ahead ([systemd](docs/SYSTEMD.md)) |
 | AUR | Packages Constellation needs from the AUR are pinned to reviewed commits and built into Constellation's own signed repository; nothing from the AUR is installed unreviewed ([Building](docs/BUILDING.md)) |
 | Russian | The *Между нами* textbook, FSI, DLI and Peace Corps courses, a 10,000-word spaced-repetition drill, 29 audiobooks, Russian Wikisource, Wikipedia and Wiktionary, Piper voices and a local AI tutor ([Russian](docs/RUSSIAN.md)) |
-| Everyday | sudo remembers your password for two hours in every terminal; zram instead of swap; paru for the AUR |
+| Everyday | sudo remembers your password for two hours in every terminal; zram instead of swap; the AUR ready to use through paru (which shows you every PKGBUILD before building) |
 
 ## Installing
 
-1. Write the ISO to a USB stick and boot it in UEFI mode. The boot menu offers the live system.
-2. Connect to the internet (`iwctl station wlan0 connect "Network"` for Wi-Fi).
-3. `constellation-install` (rehearse first with `constellation-install --dry-run`). It erases one whole disk.
+1. Write the ISO to a USB stick and boot it in UEFI mode.
+2. The live system offers to start the installer. It asks for your user name, a password and whether to encrypt (and which disk, if there is more than one), then erases that disk and installs. No internet connection is needed: every package, and the Russian voices and course books, are on the stick.
+
+Rehearse first with `constellation-install --dry-run`, which shows every step and changes nothing.
 
 See [Installing](docs/INSTALL.md) for what the installer does.
 
@@ -45,7 +46,7 @@ On an Arch Linux machine (WSL2 works, with systemd enabled):
 ~~~sh
 build/aur-pin.sh                      # review and pin the AUR packages (first time, and when they change)
 build/build-repo.sh                   # build every package in a clean chroot, signed
-sudo build/build-iso.sh               # build the ISO with mkarchiso
+sudo build/build-iso.sh               # build the ISO with mkarchiso (packages and content packs on it)
 build/publish-repo.sh                 # publish the repository that installed systems update from
 ~~~
 

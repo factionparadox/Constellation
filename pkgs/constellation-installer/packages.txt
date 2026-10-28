@@ -2,6 +2,7 @@
 # The birthDate-free systemd family replaces Arch's systemd (listed by build/build-repo.sh
 # in systemd-packages.txt, which the installer adds to this list).
 base
+base-devel
 linux-lts
 linux-lts-headers
 linux-firmware

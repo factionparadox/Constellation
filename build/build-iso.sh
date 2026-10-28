@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Build the Constellation live/installer ISO with mkarchiso.
 #
-#   sudo build/build-iso.sh [--repo DIR] [--out DIR]
+#   sudo build/build-iso.sh [--repo DIR] [--out DIR] [--content "PACKS" | --content none]
+#
+# The ISO installs with no network: every package an installed system needs is on it
+# (build/build-offline-repo.sh), and so are the Russian content packs named by --content
+# (default: ru-voices ru-course; add ru-audiobooks for 4.6 GB more), from the content mirror.
 #
 # Starts from Arch's own releng profile (so it follows archiso as Arch updates it) and adds:
 # the LTS kernel with OpenZFS, the birthDate-free systemd in place of Arch's, Constellation's
@@ -12,6 +16,7 @@ set -Eeuo pipefail
 HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd -- "$HERE/.." && pwd)
 PKGREPO=$REPO/out/repo OUT=$REPO/out WORK=${CONSTELLATION_WORK:-$REPO/work}
+CONTENT='ru-voices ru-course'
 RELENG=${CONSTELLATION_RELENG:-/usr/share/archiso/configs/releng}
 REMOTE=${CONSTELLATION_REMOTE:-https://github.com/factionparadox/Constellation/releases/download/repo}
 
@@ -19,7 +24,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --repo) PKGREPO=$(realpath -m "$2"); shift 2 ;;
     --out) OUT=$(realpath -m "$2"); shift 2 ;;
-    -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --content) CONTENT=$2; [ "$CONTENT" != none ] || CONTENT=''; shift 2 ;;
+    -h|--help) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -87,13 +93,34 @@ add_repo "$PROFILE/pacman.conf" "file://$PKGREPO"
 
 AIR=$PROFILE/airootfs
 SHARE=$AIR/usr/share/constellation/install
-install -d "$SHARE" "$AIR/opt/constellation/repo"
-cp -a "$PKGREPO"/. "$AIR/opt/constellation/repo/"
+install -d "$SHARE" "$AIR/opt/constellation"
+
+# --- every package the installed system needs, so installing works with no network
+"$HERE/build-offline-repo.sh" "$PKGREPO" "$OUT/offline" "$SIGLEVEL"
+cp -a "$OUT/offline" "$AIR/opt/constellation/offline"
 cp "$PKGREPO/systemd-packages.txt" "$SHARE/"
-# pacman-live.conf: how the installer installs (Constellation from the USB stick, Arch from its mirrors);
-# pacman.conf: the installed system's (Constellation's repository online).
-cp "$RELENG/pacman.conf" "$SHARE/pacman-live.conf"; add_repo "$SHARE/pacman-live.conf" 'file:///opt/constellation/repo'
+# pacman-live.conf: how the installer installs (only from the USB stick, never the network);
+# pacman.conf: the installed system's (Arch's mirrors and Constellation's repository online).
+cat > "$SHARE/pacman-live.conf" <<EOF
+[options]
+Architecture = auto
+SigLevel = Required DatabaseOptional
+LocalFileSigLevel = Optional
+
+[constellation-offline]
+SigLevel = $SIGLEVEL
+Server = file:///opt/constellation/offline
+EOF
 cp "$RELENG/pacman.conf" "$SHARE/pacman.conf"; add_repo "$SHARE/pacman.conf" "$REMOTE"
+
+# --- the Russian content packs, from the content mirror (each part checked by its SHA-256)
+for pack in $CONTENT; do
+  say "Content pack $pack"
+  python3 -I "$REPO/pkgs/constellation-russian/fetch-mirror.py" --mirror "$REPO/pkgs/constellation-russian/mirror.json" \
+    --pack "$pack" --dest "$OUT/content/$pack" || die "could not fetch $pack from the content mirror"
+  install -d "$AIR/opt/constellation/content"
+  cp -a "$OUT/content/$pack" "$AIR/opt/constellation/content/$pack"
+done
 # The installed system should not keep the live ISO's pacman defaults: use a stock Arch pacman.conf.
 sed -i -E 's/^#?(ParallelDownloads).*/\1 = 5/; s/^#(Color)$/\1/' "$SHARE/pacman.conf"
 
@@ -109,9 +136,10 @@ ExecStart=/usr/bin/pacman-key --lsign-key $fpr
 EOF
 fi
 
-# --- a welcome on the live console
+# --- a welcome on the live console, which offers to start the installer
 install -Dm0755 "$REPO/iso/constellation-welcome" "$AIR/usr/local/bin/constellation-welcome"
 cp "$REPO/iso/motd" "$AIR/etc/motd"
+printf '\n# Constellation: offer the installer on the first console\n[ "$(tty)" = /dev/tty1 ] && /usr/local/bin/constellation-welcome --offer\n' >> "$AIR/root/.zlogin"
 
 # --- the themed GRUB menu
 say 'Preparing the boot menu theme'

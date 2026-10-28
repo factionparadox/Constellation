@@ -9,7 +9,9 @@ url='https://github.com/factionparadox/Constellation'
 license=('MIT')
 depends=(
   'base' 'sudo' 'zram-generator' 'arch-install-scripts' 'efibootmgr'
-  'zfs-utils' 'zfsbootmenu-efi' 'paru'
+  'zfs-utils' 'zfsbootmenu-efi'
+  # the AUR, through paru (base-devel to build with)
+  'paru' 'base-devel' 'git'
   # birthDate-free systemd (see docs/SYSTEMD.md); Arch's own systemd is never used
   'systemd-remove-birthdate'
 )
@@ -17,8 +19,8 @@ backup=('etc/sudoers.d/10-constellation' 'etc/systemd/zram-generator.conf')
 source=('sudoers' 'zram-generator.conf' '99-constellation-zram.conf'
         '00-constellation-snapshot.hook' 'pacman-snapshot' 'constellation-be'
         '95-constellation-zfsbootmenu.hook' 'update-zfsbootmenu' '96-constellation-initramfs.hook'
-        '97-constellation-birthdate.hook' 'check-birthdate')
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+        '97-constellation-birthdate.hook' 'check-birthdate' 'paru.conf')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
   install -Dm0440 sudoers "$pkgdir/etc/sudoers.d/10-constellation"
@@ -32,4 +34,5 @@ package() {
   install -Dm0644 96-constellation-initramfs.hook "$pkgdir/usr/share/libalpm/hooks/96-constellation-initramfs.hook"
   install -Dm0644 97-constellation-birthdate.hook "$pkgdir/usr/share/libalpm/hooks/97-constellation-birthdate.hook"
   install -Dm0755 check-birthdate "$pkgdir/usr/lib/constellation/check-birthdate"
+  install -Dm0644 paru.conf "$pkgdir/etc/skel/.config/paru/paru.conf"
 }

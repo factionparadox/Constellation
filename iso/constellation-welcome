@@ -9,11 +9,14 @@ Installing erases one whole disk and gives you:
   * niri and the Caelestia shell, the birthDate-free systemd, zram instead of swap
   * the Russian kit (constellation-russian; downloads with constellation-content)
 
-1. Connect to the internet (Ethernet works by itself). For Wi-Fi:
-       iwctl station wlan0 scan
-       iwctl station wlan0 get-networks
-       iwctl station wlan0 connect "Network name"
-2. Check the computer started in UEFI mode:  ls /sys/firmware/efi
-3. Install:  constellation-install
-   Rehearse first, changing nothing:  constellation-install --dry-run
+Everything is on this USB stick: installing needs no internet connection.
+  Install:   constellation-install
+  Rehearse:  constellation-install --dry-run   (shows every step, changes nothing)
 TXT
+if [ "${1:-}" = --offer ] && [ ! -e /run/constellation-offered ]; then
+  : > /run/constellation-offered
+  printf '\nStart the installer now? [Y/n] '
+  read -r a || a=n
+  case "$a" in [nN]*) echo 'You are at a root shell. Run constellation-install when you are ready.' ;;
+    *) constellation-install ;; esac
+fi

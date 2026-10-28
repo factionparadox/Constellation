@@ -12,7 +12,7 @@ Ported from Kirin. `constellation-russian path` lays out the route; everything r
 | `constellation-russian read mezhdunami\|wikisource\|wikipedia\|wiktionary-ru\|wiktionary` | the textbook and Kiwix |
 | `constellation-russian library [--open]` | the FSI, DLI and Peace Corps courses |
 
-Menu launchers: *Russian Words* and *Russian Tutor*; Super+R opens the word drill.
+Menu launchers: *Russian Words* and *Russian Tutor*; Super+Alt+R opens the word drill.
 
 ## Downloads: `sudo constellation-content`
 

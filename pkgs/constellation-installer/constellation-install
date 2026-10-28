@@ -2,6 +2,10 @@
 # constellation-install: install Constellation from the live USB onto a whole disk, with an
 # OpenZFS root (optionally encrypted), a separate /home and ZFSBootMenu as the boot loader.
 # Erases the chosen disk. Follows ZFSBootMenu's Arch Linux UEFI guide (docs.zfsbootmenu.org).
+# Needs no network: every package comes from the USB stick (/opt/constellation/offline), and
+# so do the Russian content packs the ISO was built with (/opt/constellation/content).
+# It asks four things: the disk (only if there is more than one), your user name, a password,
+# and whether to encrypt. Everything else has a default, and every answer can be a flag:
 #
 #   --disk DEV               disk to erase and install to (otherwise you choose from a list)
 #   --username NAME          first user (asked if not given)   --fullname "Full Name"
@@ -17,6 +21,8 @@ POOL=zroot BE=constellation MNT=/mnt/constellation
 DISK='' USERNAME='' FULLNAME='' PASSWORD_FILE='' ENC_FILE='' ENCRYPT='' HOST=constellation
 TZ_NAME=Europe/London KEYMAP=uk YES=0 DRY=0
 SHARE=${CONSTELLATION_INSTALL_SHARE:-/usr/share/constellation/install}
+OFFLINE=${CONSTELLATION_INSTALL_OFFLINE:-/opt/constellation/offline}
+CONTENT=${CONSTELLATION_INSTALL_CONTENT:-/opt/constellation/content}
 KEYFILE=/etc/zfs/$POOL.key
 
 die() { printf '\nconstellation-install: %s\n' "$*" >&2; exit 1; }
@@ -26,7 +32,7 @@ in_target() { run arch-chroot "$MNT" "$@"; }
 write() {      # write FILE: stdin becomes FILE (or is shown, in a dry run)
   if [ "$DRY" -eq 1 ]; then printf '+ write %s:\n' "$1"; sed 's/^/    /'; else cat > "$1"; fi
 }
-usage() { sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -86,6 +92,7 @@ if [ "$DRY" -eq 0 ]; then
   for f in systemd-packages.txt pacman-live.conf pacman.conf; do
     [ -f "$SHARE/$f" ] || die "$SHARE/$f is missing; this live USB was not built by build/build-iso.sh"
   done
+  [ -f "$OFFLINE/constellation-offline.db.tar.gz" ] || die "the packages are missing from this USB stick ($OFFLINE)"
 fi
 
 # ------------------------------------------------------------------ questions
@@ -98,7 +105,8 @@ if [ -z "$DISK" ]; then
                        grep -v -E '/dev/(loop|zram|sr)' | { if [ -n "$live" ]; then grep -v "^/dev/$live "; else cat; fi })
   [ ${#disks[@]} -gt 0 ] || die 'no disks found (the live USB itself is never offered)'
   echo; for i in "${!disks[@]}"; do printf '  %d) %s\n' $((i + 1)) "${disks[$i]}"; done
-  read -rp 'Install to which disk (number)? ' n || n=''
+  if [ ${#disks[@]} -eq 1 ]; then n=1; echo 'That is the only disk, so Constellation goes there.'
+  else read -rp 'Install to which disk (number)? ' n || n=''; fi
   [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -ge 1 ] && [ "$n" -le ${#disks[@]} ] || die 'no disk chosen'
   DISK=$(awk '{print $1}' <<< "${disks[$((n - 1))]}")
 fi
@@ -108,7 +116,6 @@ until [ -n "$USERNAME" ] && valid_user "$USERNAME"; do
   [ -z "$USERNAME" ] || echo 'Use lower-case letters, digits, - and _ (not root).'
   read -rp 'Your user name (e.g. stephen): ' USERNAME || die 'no user name given'
 done
-[ -n "$FULLNAME" ] || read -rp 'Your full name (optional): ' FULLNAME || true
 valid_host "$HOST" || die "invalid host name: $HOST"
 [ "$DRY" -eq 1 ] || [ -f "/usr/share/zoneinfo/$TZ_NAME" ] || die "unknown time zone: $TZ_NAME"
 if [ -n "$PASSWORD_FILE" ]; then PASSWORD=$(head -1 "$PASSWORD_FILE"); else PASSWORD=$(ask_secret "Password for $USERNAME" 1); fi
@@ -187,7 +194,7 @@ run udevadm trigger
 run install -d "$MNT/boot/efi"
 run mount "$ESP" "$MNT/boot/efi"
 
-say 'Installing Constellation (downloads packages; this takes a while)'
+say 'Installing Constellation from the USB stick (no network needed; a few minutes)'
 mapfile -t pkgs < <(packages)
 # The birthDate-free systemd is installed in the same step as base, so Arch's systemd never is.
 # Not -K: pacstrap copies the live system's keyring, which already trusts Constellation's
@@ -240,6 +247,18 @@ if [ "$DRY" -eq 1 ]; then echo "+ (set the password for $USERNAME)"
 else printf '%s:%s\n' "$USERNAME" "$PASSWORD" | arch-chroot "$MNT" chpasswd; fi
 in_target passwd -l root      # administration is through sudo
 
+# Russian content packs carried on the USB stick (the rest: sudo constellation-content).
+declare -A PACKDIR=([ru-voices]=voices [ru-course]=library [ru-audiobooks]=audiobooks)
+copied=0
+for pack in "${!PACKDIR[@]}"; do
+  [ -d "$CONTENT/$pack" ] || continue
+  say "Copying $pack from the USB stick"
+  run install -d "$MNT/var/lib/constellation/russian"
+  run cp -a "$CONTENT/$pack" "$MNT/var/lib/constellation/russian/${PACKDIR[$pack]}"
+  copied=1
+done
+[ "$copied" -eq 0 ] || in_target constellation-content refresh
+
 say 'Installing ZFSBootMenu'
 run env CONSTELLATION_ESP="$MNT/boot/efi" "$MNT/usr/lib/constellation/update-zfsbootmenu"
 run efibootmgr -c -d "$DISK" -p 1 -L 'Constellation (ZFSBootMenu, backup)' -l '\EFI\ZBM\VMLINUZ-BACKUP.EFI'
@@ -256,5 +275,7 @@ Constellation is installed on $DISK.
 Remove the USB stick and restart. ZFSBootMenu starts first$([ "$ENCRYPT" -eq 1 ] && echo ', asks for your disk passphrase,') and boots Constellation.
 
 Update with:  sudo constellation-be upgrade    (updates a copy; your running system is never touched)
+AUR:          paru NAME    (paru shows you each PKGBUILD before it builds anything)
+Russian:      constellation-russian path; more downloads with sudo constellation-content
 The snapshot "installed" is your first rollback point: constellation-be list
 EOF

@@ -57,3 +57,9 @@ Constellation's own packages: bump `pkgver` or `pkgrel` in `pkgs/NAME/PKGBUILD` 
     python3 -m unittest discover -s tests
 
 They run the scripts against stubs: boot environments (`constellation-be` with a fake pool), the installer (`--dry-run`), the Russian tools, the downloaders and the content mirror. They do not replace a real build and install.
+
+## The offline ISO
+
+`build/build-iso.sh` runs `build/build-offline-repo.sh`, which resolves the complete dependency closure of `pkgs/constellation-installer/packages.txt` (plus the birthDate-free systemd) against an empty package database, exactly as `pacstrap` will, and downloads every package with its signature into `out/offline`. Arch's packages are checked against Arch's keyring and Constellation's against `keys/constellation.asc`; the installer checks them all again. Later builds only download what changed.
+
+Russian content packs come from the content mirror, checked part by part: `--content "ru-voices ru-course"` is the default (about 0.4 GB), `--content "ru-voices ru-course ru-audiobooks"` adds 4.6 GB, `--content none` leaves them out. The AI tutor and the Kiwix libraries are too large for the stick and stay downloads (`sudo constellation-content`).

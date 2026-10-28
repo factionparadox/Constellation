@@ -8,6 +8,7 @@ come first from the content mirror (GitHub release assets), so they cannot vanis
 
     constellation-content                          choose interactively
     constellation-content list                     what is available and what is installed
+    sudo constellation-content refresh             re-read what is on disk (after copying packs in)
     sudo constellation-content install PACK [PACK...]   (or: install all)
     sudo constellation-content remove PACK
 """
@@ -220,11 +221,14 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog='constellation-content', description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest='cmd')
     sub.add_parser('list')
+    sub.add_parser('refresh')
     inst = sub.add_parser('install'); inst.add_argument('packs', nargs='+')
     rem = sub.add_parser('remove'); rem.add_argument('packs', nargs='+')
     args = ap.parse_args(argv)
     if args.cmd == 'list':
         listing(); return 0
+    if args.cmd == 'refresh':
+        need_root(); update_config(); say(f'updated {CONFIG}'); return 0
     if args.cmd is None:
         packs = choose()
         if not packs:

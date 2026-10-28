@@ -1,5 +1,7 @@
 # Installing Constellation
 
+**No network needed.** Every package comes from the USB stick, and so do the content packs the ISO was built with; they are copied to `/var/lib/constellation/russian`. The installer asks for the disk (only if there is more than one), your user name, a password and whether to encrypt; the host name (`constellation`), time zone (`Europe/London`) and keyboard (`uk`) have defaults you can change with `--hostname`, `--timezone` and `--keymap`.
+
 `constellation-install` (from the live USB) erases one whole disk and installs Constellation on it. It follows ZFSBootMenu's Arch Linux UEFI guide. Rehearse it first: `constellation-install --dry-run` prints every command without running any.
 
 It asks for the disk (the USB stick itself is never offered), your user name, a password, and whether to encrypt the disk. Options: `--disk`, `--username`, `--fullname`, `--password-file`, `--encrypt-passphrase-file` or `--no-encrypt`, `--hostname` (default `constellation`), `--timezone` (default `Europe/London`), `--keymap` (default `uk`), `--yes`.
