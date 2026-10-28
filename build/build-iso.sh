@@ -93,11 +93,16 @@ add_repo "$PROFILE/pacman.conf" "file://$PKGREPO"
 
 AIR=$PROFILE/airootfs
 SHARE=$AIR/usr/share/constellation/install
-install -d "$SHARE" "$AIR/opt/constellation"
+install -d "$SHARE"
+# The packages and content packs go on the ISO itself, beside the live system's squashfs
+# rather than inside it (added after mkarchiso, below): they are already compressed, and
+# the live image stays small enough to boot quickly. The live system sees them under
+# /run/archiso/bootmnt.
+BOOTMNT=/run/archiso/bootmnt
 
 # --- every package the installed system needs, so installing works with no network
+command -v xorriso >/dev/null || die 'install libisoburn (xorriso): sudo pacman -S libisoburn'
 "$HERE/build-offline-repo.sh" "$PKGREPO" "$OUT/offline" "$SIGLEVEL"
-cp -a "$OUT/offline" "$AIR/opt/constellation/offline"
 cp "$PKGREPO/systemd-packages.txt" "$SHARE/"
 # pacman-live.conf: how the installer installs (only from the USB stick, never the network);
 # pacman.conf: the installed system's (Arch's mirrors and Constellation's repository online).
@@ -109,7 +114,7 @@ LocalFileSigLevel = Optional
 
 [constellation-offline]
 SigLevel = $SIGLEVEL
-Server = file:///opt/constellation/offline
+Server = file://$BOOTMNT/constellation-offline
 EOF
 cp "$RELENG/pacman.conf" "$SHARE/pacman.conf"; add_repo "$SHARE/pacman.conf" "$REMOTE"
 
@@ -118,8 +123,6 @@ for pack in $CONTENT; do
   say "Content pack $pack"
   python3 -I "$REPO/pkgs/constellation-russian/fetch-mirror.py" --mirror "$REPO/pkgs/constellation-russian/mirror.json" \
     --pack "$pack" --dest "$OUT/content/$pack" || die "could not fetch $pack from the content mirror"
-  install -d "$AIR/opt/constellation/content"
-  cp -a "$OUT/content/$pack" "$AIR/opt/constellation/content/$pack"
 done
 # The installed system should not keep the live ISO's pacman defaults: use a stock Arch pacman.conf.
 sed -i -E 's/^#?(ParallelDownloads).*/\1 = 5/; s/^#(Color)$/\1/' "$SHARE/pacman.conf"
@@ -178,6 +181,13 @@ mkdir -p "$OUT"
 mkarchiso -v -w "$WORK/archiso" -o "$OUT" "$PROFILE"
 rm -rf "$WORK/archiso"
 iso=$(ls -t "$OUT"/constellation-*.iso | head -1)
+
+say 'Adding the packages and content packs to the ISO'
+maps=(-map "$OUT/offline" /constellation-offline)
+for pack in $CONTENT; do maps+=(-map "$OUT/content/$pack" "/constellation-content/$pack"); done
+# replay keeps archiso's boot setup (BIOS, UEFI and the hybrid USB layout) exactly as it was.
+xorriso -indev "$iso" -outdev "$iso.new" -boot_image any replay "${maps[@]}"
+mv -f "$iso.new" "$iso"
 (cd "$OUT" && sha256sum "$(basename "$iso")" > "$(basename "$iso").sha256")
 [ -z "${SUDO_UID:-}" ] || chown "$SUDO_UID:${SUDO_GID:-$SUDO_UID}" "$iso" "$iso.sha256"
 say "Built $iso ($(du -h "$iso" | cut -f1))"

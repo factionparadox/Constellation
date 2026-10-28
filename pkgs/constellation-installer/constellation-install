@@ -2,8 +2,8 @@
 # constellation-install: install Constellation from the live USB onto a whole disk, with an
 # OpenZFS root (optionally encrypted), a separate /home and ZFSBootMenu as the boot loader.
 # Erases the chosen disk. Follows ZFSBootMenu's Arch Linux UEFI guide (docs.zfsbootmenu.org).
-# Needs no network: every package comes from the USB stick (/opt/constellation/offline), and
-# so do the Russian content packs the ISO was built with (/opt/constellation/content).
+# Needs no network: every package comes from the USB stick (constellation-offline on it), and
+# so do the Russian content packs the ISO was built with (constellation-content).
 # It asks four things: the disk (only if there is more than one), your user name, a password,
 # and whether to encrypt. Everything else has a default, and every answer can be a flag:
 #
@@ -21,8 +21,9 @@ POOL=zroot BE=constellation MNT=/mnt/constellation
 DISK='' USERNAME='' FULLNAME='' PASSWORD_FILE='' ENC_FILE='' ENCRYPT='' HOST=constellation
 TZ_NAME=Europe/London KEYMAP=uk YES=0 DRY=0
 SHARE=${CONSTELLATION_INSTALL_SHARE:-/usr/share/constellation/install}
-OFFLINE=${CONSTELLATION_INSTALL_OFFLINE:-/opt/constellation/offline}
-CONTENT=${CONSTELLATION_INSTALL_CONTENT:-/opt/constellation/content}
+BOOTMNT=/run/archiso/bootmnt     # the USB stick itself
+OFFLINE=${CONSTELLATION_INSTALL_OFFLINE:-$BOOTMNT/constellation-offline}
+CONTENT=${CONSTELLATION_INSTALL_CONTENT:-$BOOTMNT/constellation-content}
 KEYFILE=/etc/zfs/$POOL.key
 
 die() { printf '\nconstellation-install: %s\n' "$*" >&2; exit 1; }
@@ -92,6 +93,10 @@ if [ "$DRY" -eq 0 ]; then
   for f in systemd-packages.txt pacman-live.conf pacman.conf; do
     [ -f "$SHARE/$f" ] || die "$SHARE/$f is missing; this live USB was not built by build/build-iso.sh"
   done
+  # If the live system was copied to RAM (copytoram), the stick is no longer mounted: remount it.
+  if [ ! -d "$OFFLINE" ] && label=$(grep -o 'archisolabel=[^ ]*' /proc/cmdline | cut -d= -f2) && [ -n "$label" ]; then
+    mkdir -p "$BOOTMNT"; mount -o ro "/dev/disk/by-label/$label" "$BOOTMNT" || true
+  fi
   [ -f "$OFFLINE/constellation-offline.db.tar.gz" ] || die "the packages are missing from this USB stick ($OFFLINE)"
 fi
 
