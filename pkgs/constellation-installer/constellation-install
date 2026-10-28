@@ -24,6 +24,7 @@ SHARE=${CONSTELLATION_INSTALL_SHARE:-/usr/share/constellation/install}
 BOOTMNT=/run/archiso/bootmnt     # the USB stick itself
 OFFLINE=${CONSTELLATION_INSTALL_OFFLINE:-$BOOTMNT/constellation-offline}
 CONTENT=${CONSTELLATION_INSTALL_CONTENT:-$BOOTMNT/constellation-content}
+MUSIC=${CONSTELLATION_INSTALL_MUSIC:-$BOOTMNT/constellation-music}     # personal ISOs only
 KEYFILE=/etc/zfs/$POOL.key
 
 die() { printf '\nconstellation-install: %s\n' "$*" >&2; exit 1; }
@@ -263,6 +264,13 @@ for pack in "${!PACKDIR[@]}"; do
   copied=1
 done
 [ "$copied" -eq 0 ] || in_target constellation-content refresh
+
+if [ -d "$MUSIC" ]; then
+  say "Copying your music into /home/$USERNAME/Music"
+  run install -d "$MNT/home/$USERNAME/Music"
+  run cp -a "$MUSIC/." "$MNT/home/$USERNAME/Music/"
+  in_target chown -R "$USERNAME:$USERNAME" "/home/$USERNAME/Music"
+fi
 
 say 'Installing ZFSBootMenu'
 run env CONSTELLATION_ESP="$MNT/boot/efi" "$MNT/usr/lib/constellation/update-zfsbootmenu"

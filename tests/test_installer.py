@@ -66,6 +66,14 @@ class InstallerDryRun(unittest.TestCase):
         out = self.install('--no-encrypt', env={'CONSTELLATION_INSTALL_CONTENT': str(content / 'none')})
         self.assertNotIn('constellation-content refresh', out)
 
+    def test_music_on_a_personal_stick_goes_to_the_users_music_folder(self):
+        music = Path(self.tmp.name) / 'music'; (music / 'Кино').mkdir(parents=True)
+        out = self.install('--no-encrypt', env={'CONSTELLATION_INSTALL_MUSIC': str(music)})
+        self.assertIn(f'+ cp -a {music}/. /mnt/constellation/home/stephen/Music/', out)
+        self.assertIn('chown -R stephen:stephen /home/stephen/Music', out)
+        out = self.install('--no-encrypt', env={'CONSTELLATION_INSTALL_MUSIC': str(music / 'none')})
+        self.assertNotIn('Music', out)
+
     def test_encrypted_install_keeps_the_key_in_the_initramfs_only(self):
         out = self.install('--encrypt-passphrase-file', str(self.key))
         self.assertIn('encryption=aes-256-gcm', out)

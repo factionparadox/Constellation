@@ -2,6 +2,11 @@
 # Build the Constellation live/installer ISO with mkarchiso.
 #
 #   sudo build/build-iso.sh [--repo DIR] [--out DIR] [--content "PACKS" | --content none]
+#                           [--music DIR | --no-music]
+#
+# Personal files: if local/music exists (git ignores local/), it goes on the ISO and the
+# installer copies it into your Music folder. Such an ISO is named constellation-personal-*
+# and is for you only: never share or publish it. --no-music leaves it out.
 #
 # The ISO installs with no network: every package an installed system needs is on it
 # (build/build-offline-repo.sh), and so are the Russian content packs named by --content
@@ -17,6 +22,7 @@ HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd -- "$HERE/.." && pwd)
 PKGREPO=$REPO/out/repo OUT=$REPO/out WORK=${CONSTELLATION_WORK:-$REPO/work}
 CONTENT='ru-voices ru-course ru-audiobooks'
+MUSIC=$REPO/local/music
 RELENG=${CONSTELLATION_RELENG:-/usr/share/archiso/configs/releng}
 REMOTE=${CONSTELLATION_REMOTE:-https://github.com/factionparadox/Constellation/releases/download/repo}
 
@@ -24,8 +30,10 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --repo) PKGREPO=$(realpath -m "$2"); shift 2 ;;
     --out) OUT=$(realpath -m "$2"); shift 2 ;;
+    --music) MUSIC=$(realpath -m "$2"); shift 2 ;;
+    --no-music) MUSIC=''; shift ;;
     --content) CONTENT=$2; [ "$CONTENT" != none ] || CONTENT=''; shift 2 ;;
-    -h|--help) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -185,9 +193,17 @@ iso=$(ls -t "$OUT"/constellation-*.iso | head -1)
 say 'Adding the packages and content packs to the ISO'
 maps=(-map "$OUT/offline" /constellation-offline)
 for pack in $CONTENT; do maps+=(-map "$OUT/content/$pack" "/constellation-content/$pack"); done
+if [ -n "$MUSIC" ] && [ -d "$MUSIC" ] && [ -n "$(ls -A "$MUSIC")" ]; then
+  say "Adding your music from $MUSIC ($(du -sh "$MUSIC" | cut -f1)): a PERSONAL ISO, not for sharing"
+  maps+=(-map "$MUSIC" /constellation-music)
+  personal=$OUT/$(basename "$iso" | sed 's/^constellation-/constellation-personal-/')
+else
+  personal=''
+fi
 # replay keeps archiso's boot setup (BIOS, UEFI and the hybrid USB layout) exactly as it was.
 xorriso -indev "$iso" -outdev "$iso.new" -boot_image any replay "${maps[@]}"
 mv -f "$iso.new" "$iso"
+if [ -n "$personal" ]; then mv -f "$iso" "$personal"; iso=$personal; fi
 (cd "$OUT" && sha256sum "$(basename "$iso")" > "$(basename "$iso").sha256")
 [ -z "${SUDO_UID:-}" ] || chown "$SUDO_UID:${SUDO_GID:-$SUDO_UID}" "$iso" "$iso.sha256"
 say "Built $iso ($(du -h "$iso" | cut -f1))"

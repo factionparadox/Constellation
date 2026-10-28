@@ -63,3 +63,7 @@ They run the scripts against stubs: boot environments (`constellation-be` with a
 `build/build-iso.sh` runs `build/build-offline-repo.sh`, which resolves the complete dependency closure of `pkgs/constellation-installer/packages.txt` (plus the birthDate-free systemd) against an empty package database, exactly as `pacstrap` will, and downloads every package with its signature into `out/offline`. Arch's packages are checked against Arch's keyring and Constellation's against `keys/constellation.asc`; the installer checks them all again. Later builds only download what changed.
 
 Russian content packs come from the content mirror, checked part by part: the voices, the course books and the 29 audiobooks are on the ISO by default (about 5 GB; `--content "ru-voices ru-course"` leaves the audiobooks out, `--content none` leaves them all out). The AI tutor and the Kiwix libraries are too large for the stick and stay downloads (`sudo constellation-content`).
+
+## A personal ISO
+
+Files of your own, such as music you have bought, go in `local/music` (git ignores everything under `local/`, so they are never committed). If that folder exists and is not empty, `build/build-iso.sh` puts it on the ISO, names the ISO `constellation-personal-*.iso`, and the installer copies it to `~/Music`. A personal ISO is for your own machines only: do not share or publish it. `--no-music` builds the ordinary ISO even when `local/music` exists.
