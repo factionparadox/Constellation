@@ -51,6 +51,13 @@ command -v grub-mkfont >/dev/null || die 'install grub (for the boot menu fonts)
 if ls "$PKGREPO"/*.pkg.tar.zst.sig >/dev/null 2>&1; then
   SIGLEVEL='Required DatabaseOptional'
   [ -f "$REPO/keys/constellation.asc" ] || die 'signed packages but no public key: export it to keys/constellation.asc (docs/BUILDING.md)'
+  # mkarchiso installs with this machine's pacman, which must trust Constellation's key.
+  fpr=$(gpg --with-colons --import-options show-only --import "$REPO/keys/constellation.asc" | awk -F: '$1 == "fpr" {print $10; exit}')
+  if ! pacman-key --list-keys "$fpr" >/dev/null 2>&1; then
+    say "Adding Constellation's signing key ($fpr) to this machine's pacman keyring"
+    pacman-key --add "$REPO/keys/constellation.asc"
+    pacman-key --lsign-key "$fpr"
+  fi
 else
   SIGLEVEL='Optional TrustAll'
   echo 'WARNING: unsigned repository. This ISO is for local testing only.'
