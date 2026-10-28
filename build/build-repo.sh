@@ -123,7 +123,15 @@ while read -r name commit src; do
   if [ -n "$src" ]; then
     grep -q '#commit=' "$d/PKGBUILD" || sed -i '0,/git+[^"#)]*/s||&#commit='"${src#src=}"'|' "$d/PKGBUILD"
   fi
+  # A git package's version comes from its source (pkgver()), so makepkg's package list cannot
+  # tell whether it is built: remember the pins it was last built from instead.
+  stamp=$WORK/stamps/$name
+  if [ -n "$src" ] && [ "$(cat "$stamp" 2>/dev/null)" = "$commit $src" ] &&
+     ls "$OUT/$name"-[0-9]*.pkg.tar.zst >/dev/null 2>&1; then
+    echo "    $name: up to date"; continue
+  fi
   build "$name" "$d" 1
+  if [ -n "$src" ]; then mkdir -p "$WORK/stamps"; echo "$commit $src" > "$stamp"; fi
 done < "$REPO/pkgs/aur.lock"
 
 # ------------------------------------------------------------------ Constellation's own packages

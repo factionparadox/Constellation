@@ -59,15 +59,60 @@ for f in "$OFF"/*.pkg.tar.zst; do
   printf '%s\n' "${keep[@]}" | grep -qxF "${f##*/}" || rm -f "$f" "$f.sig"
 done
 
+# A throwaway copy of Arch's keyring, made the way pacman-key makes one: import the packager
+# keys, then a local key certifies Arch's master keys, so keys the masters signed are valid.
+arch_keyring() {   # arch_keyring GNUPGHOME KEYRINGS-DIR
+  local home=$1 dir=$2 fpr
+  install -d -m 700 "$home"
+  gpg --homedir "$home" --batch -q --pinentry-mode loopback --passphrase '' \
+    --quick-generate-key 'Constellation build check' ed25519 cert never 2>/dev/null
+  gpg --homedir "$home" --batch -K 2>/dev/null | grep -q '^sec' ||
+    die "could not create a local key in $home (gpg-agent did not start?)"
+  gpg --homedir "$home" --batch -q --import "$dir/archlinux.gpg" 2>/dev/null
+  while IFS=: read -r fpr _; do
+    [ -n "$fpr" ] && gpg --homedir "$home" --batch -q --yes --pinentry-mode loopback --passphrase '' \
+      --quick-lsign-key "$fpr" 2>/dev/null
+  done < "$dir/archlinux-trusted"
+  # The master keys' owner trust, so the packager keys they certify are valid (as pacman-key does).
+  gpg --homedir "$home" --batch -q --import-ownertrust < "$dir/archlinux-trusted" 2>/dev/null
+  gpg --homedir "$home" --batch -q --check-trustdb 2>/dev/null || true
+}
+
+good_signature() {   # good_signature GNUPGHOME FILE: a valid signature from a fully trusted key
+  local status
+  status=$(gpg --homedir "$1" --batch --status-fd 1 --verify "$2.sig" "$2" 2>"$WORK/gpg-error") || return 1
+  grep -q '^\[GNUPG:\] VALIDSIG ' <<< "$status" && grep -qE '^\[GNUPG:\] TRUST_(FULLY|ULTIMATE)' <<< "$status"
+}
+
 if [ "$SIGLEVEL" != 'Optional TrustAll' ]; then
   say 'Checking every signature'
-  gpg --homedir "$WORK/gpg" --batch -q --import "$REPO/keys/constellation.asc" 2>/dev/null || { mkdir -m 700 "$WORK/gpg"; gpg --homedir "$WORK/gpg" --batch -q --import "$REPO/keys/constellation.asc"; }
+  install -d -m 700 "$WORK/gpg"
+  gpg --homedir "$WORK/gpg" --batch -q --import "$REPO/keys/constellation.asc"
   own=$(cd "$PKGREPO" && ls *.pkg.tar.zst)
+
+  # Arch's packages are checked against the archlinux-keyring package in this same download
+  # (it may be newer than this machine's), which is itself checked against this machine's keyring.
+  kr=$(printf '%s\n' "${keep[@]}" | grep -m1 '^archlinux-keyring-') || die 'archlinux-keyring is not in the package list'
+  arch_keyring "$WORK/host-keyring" /usr/share/pacman/keyrings
+  good_signature "$WORK/host-keyring" "$OFF/$kr" ||
+    die "$kr does not verify against this machine's Arch keyring: $(cat "$WORK/gpg-error")
+Update this machine first (sudo pacman -Syu) and run the build again."
+  mkdir -p "$WORK/keyrings"
+  bsdtar -xf "$OFF/$kr" -C "$WORK/keyrings" usr/share/pacman/keyrings
+  arch_keyring "$WORK/arch-keyring" "$WORK/keyrings/usr/share/pacman/keyrings"
+
   for f in "${keep[@]}"; do
     if grep -qxF "$f" <<< "$own"; then
-      gpg --homedir "$WORK/gpg" --batch -q --verify "$OFF/$f.sig" "$OFF/$f" 2>/dev/null || die "bad Constellation signature: $f"
-    else
-      pacman-key --verify "$OFF/$f.sig" "$OFF/$f" >/dev/null 2>&1 || die "bad Arch signature: $f"
+      gpg --homedir "$WORK/gpg" --batch -q --verify "$OFF/$f.sig" "$OFF/$f" 2>"$WORK/gpg-error" ||
+        die "bad Constellation signature on $f: $(cat "$WORK/gpg-error")"
+    elif ! good_signature "$WORK/arch-keyring" "$OFF/$f"; then
+      # A damaged download is the usual cause: fetch it once more before giving up.
+      rm -f "$OFF/$f" "$OFF/$f.sig"
+      echo "    $f did not verify; downloading it again"
+      url=$(printf '%s\n' "${urls[@]}" | grep -m1 -F "/$f") || die "no download address for $f"
+      curl -fsSL --retry 5 --retry-all-errors -o "$OFF/$f" "$url" && curl -fsSL --retry 5 -o "$OFF/$f.sig" "$url.sig" ||
+        die "could not download $f again"
+      good_signature "$WORK/arch-keyring" "$OFF/$f" || die "bad Arch signature on $f: $(cat "$WORK/gpg-error")"
     fi
   done
 fi
