@@ -53,12 +53,14 @@ chroot_ready() {
     mkdir -p "$CHROOT"
     mkarchroot "$CHROOT/root" base-devel
   fi
-  # Packages built earlier in this run are dependencies of later ones: the chroot sees OUT as a repo.
-  # (pacman looks for <section>.db, so the section has the database's name.)
-  if ! grep -q "^\[$DB\]" "$CHROOT/root/etc/pacman.conf"; then
-    printf '\n[%s]\nSigLevel = Never\nServer = file:///constellation-repo\n' "$DB" |
-      sudo tee -a "$CHROOT/root/etc/pacman.conf" >/dev/null
-  fi
+  # Packages built earlier in this run are dependencies of later ones: the chroot sees OUT as a
+  # repository. arch-nspawn bind-mounts every file:// server at the same path it has on this
+  # machine, so the server is OUT's real path. (pacman looks for <section>.db, so the section
+  # has the database's name.) Rewritten every run, in case OUT moved.
+  sudo sed -i "/^# constellation-build-repo$/,/^# end constellation-build-repo$/d" "$CHROOT/root/etc/pacman.conf"
+  sudo sed -i "/^\[$DB\]$/,/^Server = file:\/\/\/constellation-repo$/d" "$CHROOT/root/etc/pacman.conf"
+  printf '\n# constellation-build-repo\n[%s]\nSigLevel = Never\nServer = file://%s\n# end constellation-build-repo\n' "$DB" "$OUT" |
+    sudo tee -a "$CHROOT/root/etc/pacman.conf" >/dev/null
 }
 
 publish() {    # publish DIR: sign the packages makepkg left in DIR, move them to OUT, index them
@@ -84,7 +86,7 @@ build() {      # build NAME DIR CHROOT(0|1)
   say "Building $name"
   if [ "$use_chroot" -eq 1 ]; then
     chroot_ready
-    (cd "$dir" && makechrootpkg -c -u -r "$CHROOT" -D "$OUT:/constellation-repo")
+    (cd "$dir" && makechrootpkg -c -u -r "$CHROOT")
   else
     # No compilation: files and dependency lists only, so no chroot is needed.
     (cd "$dir" && makepkg -f --nodeps --noconfirm)

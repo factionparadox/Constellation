@@ -11,3 +11,5 @@ pkgs/niri-caelestia-shell/niri-caelestia-shell/
 pkgs/zfsbootmenu-efi/LICENSE
 # Your own files for a personal ISO (music and so on); never committed or published.
 /local/
+pkgs/ani-cli/ani-cli/
+pkgs/python-materialyoucolor/materialyoucolor-python/
