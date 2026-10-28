@@ -1,14 +1,15 @@
 # AUR packages Constellation builds into its own repository, each pinned to a reviewed
 # AUR git commit. Built in this order (a package's AUR dependencies come first).
 # Pin or update with:  build/aur-pin.sh NAME   (shows the PKGBUILD or the diff before pinning)
-# name                                commit
-systemd-remove-birthdate              UNPINNED
-zfs-utils                             UNPINNED
-zfs-dkms                              UNPINNED
-paru                                  UNPINNED
-quickshell-git                        UNPINNED
-libcava                               UNPINNED
-app2unit                              UNPINNED
-caelestia-cli                         UNPINNED
-ttf-material-symbols-variable-git     UNPINNED
-ttf-rubik-vf                          UNPINNED
+# Files an AUR package is missing go in pkgs/aur-overlays/NAME/ (checked by the PKGBUILD's sums).
+# A -git package also needs src=COMMIT: the upstream commit to build (it would follow a branch).
+# name                                AUR commit                                upstream (git packages)
+systemd-remove-birthdate              fb20d1fba69fa3e7e26cd6e0c49aa966ef2b744f
+zfs-utils                             c878c355183ca745285d8eaf538b98788e373d3a
+zfs-dkms                              052b457ee3e7b0214249a7a7b29b4100fa93eb74
+paru                                  329be2113c590046cb29858c23d9b96a8d7bd586
+quickshell-git                        237fb7f2ddc4ef7b0e92a3f4b1e142da92e38495  src=UNPINNED
+libcava                               39403443c8208f5d9adaaed7c8347c439efe52cf
+app2unit                              e1b8a90693ed95ba41d6e51545d7d18bd10d0f31
+caelestia-cli                         a6f5c172fed5505a12c24a08ae2de6952b2c9bba
+ttf-rubik-vf                          df5b264003f0d39ba75f42970074ff2465ed527c

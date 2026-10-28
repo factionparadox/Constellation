@@ -23,6 +23,10 @@ Keep the secret key safe (and backed up): anyone with it can push packages to ev
 
 `pkgs/aur.lock` lists the AUR packages Constellation builds, in build order, each pinned to an AUR git commit you have read. `build/aur-pin.sh --deps NAME` lists a package's own AUR dependencies, which need adding above it. The first time, `systemd-remove-birthdate` deserves the most care: it becomes PID 1 on every Constellation machine.
 
+A `-git` package follows a branch, so its line also carries `src=COMMIT`, the upstream commit to build; `build-repo.sh` refuses to build it until that is set. Files an AUR repository is missing go in `pkgs/aur-overlays/NAME/` (see the README there); the PKGBUILD's checksums still check them.
+
+The Material Symbols icon font Caelestia uses is not on the AUR under the name the shell expects, so Constellation packages it itself (`pkgs/ttf-material-symbols-rounded`, pinned to a commit of Google's repository).
+
 ## 3. Build the repository
 
     build/build-repo.sh               # everything (already-built versions are skipped)

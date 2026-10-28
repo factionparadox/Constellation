@@ -1,0 +1,19 @@
+# Google's Material Symbols Rounded (variable font), the icon font the Caelestia shell uses.
+# Pinned to a commit of google/material-design-icons.
+pkgname=ttf-material-symbols-rounded
+pkgver=4.0.0.r20261023
+pkgrel=1
+_commit=10ecc14790612ca8fd164e3f4ffe9c16fc50d5b7
+pkgdesc='Material Symbols Rounded, a variable icon font by Google'
+arch=('any')
+url='https://github.com/google/material-design-icons'
+license=('Apache-2.0')
+source=("MaterialSymbolsRounded.ttf::$url/raw/$_commit/variablefont/MaterialSymbolsRounded%5BFILL,GRAD,opsz,wght%5D.ttf"
+        "LICENSE::$url/raw/$_commit/LICENSE")
+sha256sums=('7e74e36533ccee12c2b81e75bfcf3ccf123d3bb7e7e46d65d94445f23db0c97c'
+            '58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd')
+
+package() {
+  install -Dm0644 MaterialSymbolsRounded.ttf "$pkgdir/usr/share/fonts/TTF/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf"
+  install -Dm0644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

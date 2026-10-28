@@ -53,7 +53,16 @@ class PackageTests(unittest.TestCase):
         for dep in ('quickshell-git', 'caelestia-cli', 'libcava', 'app2unit'):
             self.assertIn(f"'{dep}'", shell)
             self.assertIn(dep, aur, dep)
-        self.assertTrue(own >= {'zfsbootmenu-efi', 'niri-caelestia-shell'})
+        self.assertTrue(own >= {'zfsbootmenu-efi', 'niri-caelestia-shell', 'ttf-material-symbols-rounded'})
+        self.assertIn("'ttf-material-symbols-rounded'", shell)
+
+    def test_reviewed_pins_are_full_commits(self):
+        for line in (PKGS / 'aur.lock').read_text().splitlines():
+            if line.strip() and not line.startswith('#'):
+                name, commit, *src = line.split()
+                self.assertRegex(commit, r'^([0-9a-f]{40}|UNPINNED)$', name)
+                if name.endswith('-git'):
+                    self.assertRegex(src[0], r'^src=([0-9a-f]{40}|UNPINNED)$', name)
 
     def test_installer_lists_the_desktop_and_russian(self):
         listed = [l.strip() for l in (PKGS / 'constellation-installer/packages.txt').read_text().splitlines()

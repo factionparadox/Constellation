@@ -16,7 +16,7 @@ AUR=${CONSTELLATION_AUR_URL:-https://aur.archlinux.org}
 GPGKEY=${CONSTELLATION_GPGKEY:-}
 DB=constellation
 # Constellation's own packages, in build order. Data-only ones need no chroot.
-OWN=(zfsbootmenu-efi constellation-base niri-caelestia-shell constellation-desktop constellation-russian constellation-installer)
+OWN=(zfsbootmenu-efi constellation-base ttf-material-symbols-rounded niri-caelestia-shell constellation-desktop constellation-russian constellation-installer)
 COMPILED=(niri-caelestia-shell)
 
 while [ $# -gt 0 ]; do
@@ -91,15 +91,22 @@ build() {      # build NAME DIR CHROOT(0|1)
 }
 
 # ------------------------------------------------------------------ AUR packages (reviewed, pinned)
-while read -r name commit; do
+while read -r name commit src; do
   case "$name" in ''|'#'*) continue ;; esac
   wanted "$name" || continue
   [ "$commit" != UNPINNED ] || die "$name is not pinned yet: build/aur-pin.sh $name"
+  [ "$src" != src=UNPINNED ] || die "$name builds from a git branch; pin its source commit in pkgs/aur.lock (src=COMMIT)"
   d=$WORK/aur/$name
   if [ ! -d "$d/.git" ]; then mkdir -p "$WORK/aur"; git clone -q "$AUR/$name.git" "$d"; fi
   git -C "$d" cat-file -e "$commit^{commit}" 2>/dev/null || git -C "$d" fetch -q origin
   git -C "$d" checkout -q --force "$commit" || die "$name: pinned commit $commit not found"
   git -C "$d" clean -q -fdx -e '*.pkg.tar.zst'
+  # Files the AUR package lacks (its PKGBUILD's checksums still have to match them).
+  if [ -d "$REPO/pkgs/aur-overlays/$name" ]; then cp -a "$REPO/pkgs/aur-overlays/$name/." "$d/"; fi
+  # A -git package follows a branch; src=COMMIT fixes its first git source to one reviewed commit.
+  if [ -n "$src" ]; then
+    grep -q '#commit=' "$d/PKGBUILD" || sed -i '0,/git+[^"#)]*/s||&#commit='"${src#src=}"'|' "$d/PKGBUILD"
+  fi
   build "$name" "$d" 1
 done < "$REPO/pkgs/aur.lock"
 

@@ -66,7 +66,8 @@ Details, including the signing key: [Building](docs/BUILDING.md).
 | | |
 | --- | --- |
 | First real build and install | The scripts are tested with stubs only |
-| Review of `systemd-remove-birthdate` | Pin it with `build/aur-pin.sh` once its PKGBUILD and patch are read |
+| `systemd-hook` for the patched systemd | Reviewed and pinned (the patches are clean), but its AUR repository is missing one of Arch's files; it goes in `pkgs/aur-overlays/systemd-remove-birthdate/` |
+| Quickshell's source commit | quickshell-git follows a branch; its upstream commit goes in `pkgs/aur.lock` (`src=`) |
 | Signing key | Create one and export it to `keys/constellation.asc` ([Building](docs/BUILDING.md)) |
 | ZFSBootMenu theming | ZFSBootMenu draws a text menu and cannot be themed like GRUB; the themed menu is the live USB's |
 | Constellation's own content mirror | Downloads use the copies published with Kirin (`content-v1` on factionparadox/Kirin); `build/publish-content.sh` republishes them here |
