@@ -38,7 +38,8 @@ pm() { pacman --config "$WORK/pacman.conf" --dbpath "$WORK/db" --logfile "$WORK/
 
 say 'Reading the package databases'
 pm -Sy >/dev/null
-mapfile -t want < <(grep -v -E '^\s*(#|$)' "$LIST"; grep -v -E '^\s*(#|$)' "$PKGREPO/systemd-packages.txt")
+# archlinux-keyring always: the installed system needs it, and the signature check below uses it.
+mapfile -t want < <(grep -v -E '^\s*(#|$)' "$LIST"; grep -v -E '^\s*(#|$)' "$PKGREPO/systemd-packages.txt"; echo archlinux-keyring)
 # -Sp against an empty database resolves the full closure, exactly what pacstrap will install.
 mapfile -t urls < <(pm -Sp --print-format '%l' "${want[@]}") || die 'could not resolve the package list'
 [ ${#urls[@]} -gt 50 ] || die "only ${#urls[@]} packages resolved; something is wrong"

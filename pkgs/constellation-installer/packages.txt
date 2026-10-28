@@ -3,6 +3,8 @@
 # in systemd-packages.txt, which the installer adds to this list).
 base
 base-devel
+# Arch's signing keys: pacman on the installed system checks every update with them
+archlinux-keyring
 linux-lts
 linux-lts-headers
 linux-firmware

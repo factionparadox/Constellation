@@ -84,9 +84,23 @@ open(p, 'w').write(s)
 PY
 
 # --- the LTS kernel everywhere (OpenZFS follows it reliably), plus OpenZFS and the installer
-sed -i -E 's/^linux$/linux-lts/' "$PROFILE/packages.x86_64"
+sed -i -E 's/^linux$/linux-lts/; s/^broadcom-wl$/broadcom-wl-dkms/' "$PROFILE/packages.x86_64"
+# Arch's own systemd packages (releng lists systemd-resolvconf) would conflict with the
+# birthDate-free family, which provides them all.
+sed -i -E '/^systemd(-[a-z]+)?$/d' "$PROFILE/packages.x86_64"
 grep -rlE 'vmlinuz-linux|initramfs-linux\.img' "$PROFILE"/{syslinux,grub,efiboot} 2>/dev/null |
   xargs -r sed -i -E 's/vmlinuz-linux\b/vmlinuz-linux-lts/g; s/initramfs-linux\.img/initramfs-linux-lts.img/g'
+# The live system's initramfs (with archiso's hooks) is made by releng's linux.preset: make it
+# the LTS kernel's preset instead, or linux-lts would get an ordinary initramfs that cannot boot the ISO.
+preset_dir=$PROFILE/airootfs/etc/mkinitcpio.d
+[ -f "$preset_dir/linux.preset" ] || die "releng has no airootfs/etc/mkinitcpio.d/linux.preset; archiso has changed"
+sed -E 's/vmlinuz-linux\b/vmlinuz-linux-lts/g; s/initramfs-linux([.-])/initramfs-linux-lts\1/g' \
+  "$preset_dir/linux.preset" > "$preset_dir/linux-lts.preset"
+rm "$preset_dir/linux.preset"
+grep -q 'vmlinuz-linux-lts' "$preset_dir/linux-lts.preset" || die 'could not point the live preset at linux-lts'
+if grep -rqE 'vmlinuz-linux([^-]|$)|initramfs-linux\.img' "$PROFILE"/{syslinux,grub,efiboot} "$preset_dir" 2>/dev/null; then
+  die 'a boot file still names the standard kernel; archiso has changed'
+fi
 {
   echo; echo '# Constellation'
   printf '%s\n' linux-lts-headers zfs-dkms zfs-utils zfsbootmenu-efi constellation-installer arch-install-scripts
