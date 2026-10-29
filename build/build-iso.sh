@@ -90,14 +90,18 @@ sed -i -E 's/^linux$/linux-lts/; s/^broadcom-wl$/broadcom-wl-dkms/' "$PROFILE/pa
 sed -i -E '/^systemd(-[a-z]+)?$/d' "$PROFILE/packages.x86_64"
 grep -rlE 'vmlinuz-linux|initramfs-linux\.img' "$PROFILE"/{syslinux,grub,efiboot} 2>/dev/null |
   xargs -r sed -i -E 's/vmlinuz-linux\b/vmlinuz-linux-lts/g; s/initramfs-linux\.img/initramfs-linux-lts.img/g'
-# The live system's initramfs (with archiso's hooks) is made by releng's linux.preset: make it
-# the LTS kernel's preset instead, or linux-lts would get an ordinary initramfs that cannot boot the ISO.
+# The live system's initramfs needs archiso's hooks. Older archiso set them in a linux.preset,
+# which must become the LTS kernel's; current archiso puts them in mkinitcpio.conf.d, which
+# applies to every kernel's preset (linux-lts included), so there is nothing to change.
 preset_dir=$PROFILE/airootfs/etc/mkinitcpio.d
-[ -f "$preset_dir/linux.preset" ] || die "releng has no airootfs/etc/mkinitcpio.d/linux.preset; archiso has changed"
-sed -E 's/vmlinuz-linux\b/vmlinuz-linux-lts/g; s/initramfs-linux([.-])/initramfs-linux-lts\1/g' \
-  "$preset_dir/linux.preset" > "$preset_dir/linux-lts.preset"
-rm "$preset_dir/linux.preset"
-grep -q 'vmlinuz-linux-lts' "$preset_dir/linux-lts.preset" || die 'could not point the live preset at linux-lts'
+if [ -f "$preset_dir/linux.preset" ]; then
+  sed -E 's/vmlinuz-linux\b/vmlinuz-linux-lts/g; s/initramfs-linux([.-])/initramfs-linux-lts\1/g' \
+    "$preset_dir/linux.preset" > "$preset_dir/linux-lts.preset"
+  rm "$preset_dir/linux.preset"
+elif ! grep -rqs 'archiso' "$PROFILE/airootfs/etc/mkinitcpio.conf.d/" "$PROFILE/airootfs/etc/mkinitcpio.conf" 2>/dev/null; then
+  die "cannot find where releng sets the live system's mkinitcpio hooks; archiso has changed.
+releng's mkinitcpio files: $(cd "$PROFILE/airootfs" && find . -path '*mkinitcpio*' | tr '\n' ' ')"
+fi
 if grep -rqE 'vmlinuz-linux([^-]|$)|initramfs-linux\.img' "$PROFILE"/{syslinux,grub,efiboot} "$preset_dir" 2>/dev/null; then
   die 'a boot file still names the standard kernel; archiso has changed'
 fi
