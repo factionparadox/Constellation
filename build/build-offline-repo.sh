@@ -18,9 +18,13 @@ say() { printf '\n==> %s\n' "$*"; }
 
 WORK=$(mktemp -d); trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$OFF" "$WORK/db"
+# CacheDir is an empty folder: otherwise pacman -Sp names packages already in this machine's
+# cache (/var/cache/pacman/pkg) as file:// paths, and that cache has no .sig files beside them.
+mkdir -p "$WORK/cache"
 cat > "$WORK/pacman.conf" <<EOF
 [options]
 Architecture = auto
+CacheDir = $WORK/cache/
 SigLevel = Required DatabaseOptional
 ParallelDownloads = 5
 
@@ -50,7 +54,8 @@ for url in "${urls[@]}"; do
   f=${url##*/}; keep+=("$f")
   if [ -f "$OFF/$f" ] && { [ "$SIGLEVEL" = 'Optional TrustAll' ] || [ -f "$OFF/$f.sig" ]; }; then continue; fi
   case "$url" in
-    file://*) cp "${url#file://}" "$OFF/$f"; [ ! -f "${url#file://}.sig" ] || cp "${url#file://}.sig" "$OFF/$f.sig" ;;
+    file://"$PKGREPO"/*) cp "${url#file://}" "$OFF/$f"; [ ! -f "${url#file://}.sig" ] || cp "${url#file://}.sig" "$OFF/$f.sig" ;;
+    file://*) die "pacman named $url, outside Constellation's repository; expected a download address" ;;
     *) curl -fsSL --retry 5 --retry-all-errors -o "$OFF/$f.part" "$url" && mv "$OFF/$f.part" "$OFF/$f"
        curl -fsSL --retry 5 --retry-all-errors -o "$OFF/$f.sig" "$url.sig" || die "no signature for $f" ;;
   esac
@@ -75,7 +80,7 @@ arch_keyring() {   # arch_keyring GNUPGHOME KEYRINGS-DIR
   gpg --homedir "$home" --batch -q --import "$dir/archlinux.gpg" 2>/dev/null
   while IFS=: read -r fpr _; do
     [ -n "$fpr" ] && gpg --homedir "$home" --batch -q --yes --pinentry-mode loopback --passphrase '' \
-      --quick-lsign-key "$fpr" 2>/dev/null
+      --quick-lsign-key "$fpr" >/dev/null 2>&1
   done < "$dir/archlinux-trusted"
   # The master keys' owner trust, so the packager keys they certify are valid (as pacman-key does).
   gpg --homedir "$home" --batch -q --import-ownertrust < "$dir/archlinux-trusted" 2>/dev/null
