@@ -213,7 +213,7 @@ say 'Building the ISO (this takes a while)'
 mkdir -p "$OUT"
 mkarchiso -v -w "$WORK/archiso" -o "$OUT" "$PROFILE"
 rm -rf "$WORK/archiso"
-iso=$(ls -t "$OUT"/constellation-*.iso | head -1)
+iso=$(ls -t "$OUT"/constellation-*.iso | sed -n 1p)   # sed reads to the end (head would break pipefail)
 
 say 'Adding the packages and content packs to the ISO'
 maps=(-map "$OUT/offline" /constellation-offline)

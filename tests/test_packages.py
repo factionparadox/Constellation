@@ -16,6 +16,16 @@ def array(text, name):
 
 
 class PackageTests(unittest.TestCase):
+    def test_build_scripts_have_no_early_exit_pipelines(self):
+        # Under set -o pipefail, 'producer | grep -q/-m1' or '| head' fails the whole pipeline
+        # when the reader stops early (the producer gets SIGPIPE), even on a match.
+        import re
+        for script in (ROOT / 'build').glob('*.sh'):
+            for n, line in enumerate(script.read_text().splitlines(), 1):
+                code = line.split('#', 1)[0] if not line.lstrip().startswith('#') else ''
+                self.assertIsNone(re.search(r'\|\s*(grep\s+-[a-zA-Z]*[qm]|head\b)', code),
+                                  f'{script.name}:{n}: {line.strip()}')
+
     def test_build_scripts_are_executable(self):
         import os
         for script in (ROOT / 'build').glob('*.sh'):

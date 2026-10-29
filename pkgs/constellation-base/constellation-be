@@ -47,7 +47,7 @@ bootable() {
     local kdir
     kdir=$(grep -l "^$ver\$" "$root"/usr/lib/modules/*/pkgbase 2>/dev/null | head -1 || true)
     kdir=${kdir%/pkgbase}
-    if [ -z "$kdir" ] || ! find "$kdir" -name 'zfs.ko*' -print -quit | grep -q .; then
+    if [ -z "$kdir" ] || [ -z "$(find "$kdir" -name 'zfs.ko*' -print -quit)" ]; then
       echo "  no ZFS module for the $ver kernel (OpenZFS may not support it yet)"; ok=1
     else
       echo "  $ver: kernel, initramfs and ZFS module present"
