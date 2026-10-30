@@ -1,7 +1,7 @@
 # Constellation desktop: the Hyperon compositor with the Caelestia shell, and the apps and services around it.
 pkgname=constellation-desktop
 pkgver=0.3.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Constellation desktop: Hyperon, the Caelestia shell, greetd and the everyday apps'
 arch=('any')
 url='https://github.com/factionparadox/Constellation'
@@ -47,6 +47,7 @@ package() {
   # the Constellation mark, and fastfetch drawing it in its own colours
   install -Dm0644 constellation-logo.png "$pkgdir/usr/share/pixmaps/constellation.png"
   install -Dm0644 fastfetch-logo.txt "$pkgdir/usr/share/constellation/fastfetch/constellation.txt"
-  install -Dm0644 fastfetch.jsonc "$pkgdir/etc/skel/.config/fastfetch/config.jsonc"
+  # system-wide, so every account gets it (fastfetch reads /etc/xdg after ~/.config)
+  install -Dm0644 fastfetch.jsonc "$pkgdir/etc/xdg/fastfetch/config.jsonc"
   install -Dm0644 wallpaper.png "$pkgdir/usr/share/backgrounds/constellation/constellation.png"
 }

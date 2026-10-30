@@ -10,7 +10,7 @@
 # are unchanged, and XDG_CURRENT_DESKTOP is "Hyperon:Hyprland".
 pkgname=hyperon
 pkgver=0.56.2
-pkgrel=1
+pkgrel=2
 pkgdesc="Constellation's Wayland compositor"
 arch=('x86_64')
 url='https://github.com/factionparadox/Constellation'

@@ -1,4 +1,4 @@
-// Constellation's fastfetch: the Constellation mark in its own blues and gold.
+// Constellation's fastfetch: the Constellation mark in its own blues and gold, and the whole machine.
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
   "logo": {
@@ -26,20 +26,37 @@
   "modules": [
     "title",
     "separator",
-    "os",
+    { "type": "os", "format": "Constellation (Arch Linux {arch})" },
     "host",
+    "bios",
     "kernel",
+    "initsystem",
     "uptime",
     "packages",
     "shell",
-    "wm",
+    "display",
+    { "type": "command", "key": "WM", "text": "echo \"Hyperon $(pacman -Q hyperon 2>/dev/null | cut -d' ' -f2 | cut -d- -f1) (Wayland, scrolling)\"" },
+    { "type": "command", "key": "Shell UI", "text": "echo \"Caelestia $(pacman -Q caelestia-shell 2>/dev/null | cut -d' ' -f2 | cut -d. -f1-3) on Quickshell\"" },
+    "theme",
+    "icons",
+    "font",
+    "cursor",
     "terminal",
+    "terminalfont",
     "cpu",
     "gpu",
     "memory",
+    "swap",
     "disk",
+    { "type": "command", "key": "Boot env", "text": "echo \"$(findmnt -no SOURCE /) ($(zpool list -H -o name,health 2>/dev/null | head -1 | tr '\\t' ' '))\"" },
+    "localip",
+    "wifi",
+    "bluetooth",
+    "sound",
     "battery",
+    "poweradapter",
     "locale",
+    "datetime",
     "break",
     "colors"
   ]

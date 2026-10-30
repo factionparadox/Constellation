@@ -39,6 +39,16 @@ edit $H/Compositor.cpp 1 'setenv("XDG_CURRENT_DESKTOP", "Hyprland", 1)' 'setenv(
 
 # --- quiet by default: no Hyprland logo or anime wallpaper, no splash, no popups
 V=$H/config/values/ConfigValues.cpp
+# Hyperon's own desktop name is expected, not "managed externally".
+edit $H/Compositor.cpp 1 'std::string{CURRENT_DESKTOP_ENV} != "Hyprland"' 'std::string{CURRENT_DESKTOP_ENV} != "Hyperon:Hyprland"'
+# The classic config format is Hyperon's format for good: no notice that it is going away.
+edit $H/Compositor.cpp 1 '    if (Config::mgr()->type() == Config::CONFIG_LEGACY)
+        Notification::overlay()->addNotification(I18n::i18nEngine()->localize(I18n::TXT_KEY_NOTIF_OUTDATED_CONFIG), CHyprColor{}, 15000, ICON_WARNING);
+' ''
+# hyprland-guiutils (permission and "not responding" dialogs) is not part of Hyperon, and the
+# login screen runs the compositor without the launcher's watchdog: no warnings for either.
+edit $V 1 '"disable the warning if hyprland-guiutils is missing", false)' '"disable the warning if hyprland-guiutils is missing", true)'
+edit $V 1 '"whether to disable the warning about not using start-hyprland.", false)' '"whether to disable the warning about not using the launcher.", true)'
 edit $V 1 '"disables the random Hyprland logo / anime girl background. :(", false)' '"disables the default background logo.", true)'
 edit $V 1 '"disables the Hyprland splash rendering.", false)' '"disables the splash text.", true)'
 edit $V 1 '"disable the popup that shows up when you update hyprland to a new version.", false)' '"disable the popup after an update.", true)'
