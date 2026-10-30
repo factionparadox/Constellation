@@ -1,0 +1,58 @@
+# Caelestia, the Quickshell desktop shell, ported from Hyprland to MangoWM by Constellation.
+# Upstream Caelestia at a reviewed commit, with its Hyprland service replaced by a mango one
+# (Hypr.qml: mango's IPC through mmsg) and Hyprland-only types relaxed. Bump _commit and pkgver
+# together. Caelestia needs Quickshell's git version (pinned in pkgs/aur.lock), not a release.
+pkgname=caelestia-mango
+pkgver=2.5.0.r20261029
+pkgrel=1
+_commit=b51fdb35ca7a14ac5a49e0d94fc5de2d79756aed
+_upstream=2.5.0
+pkgdesc='Caelestia, a Quickshell desktop shell, for the MangoWM compositor'
+arch=('x86_64')
+url='https://github.com/caelestia-dots/shell'
+license=('GPL-3.0-only')
+depends=(
+  'quickshell-git' 'mangowm' 'qt6-base' 'qt6-declarative' 'qt6-shadertools' 'qt6-svg' 'qt6-wayland'
+  'qt6-multimedia'
+  'caelestia-cli' 'libqalculate' 'libpipewire' 'aubio' 'libcava' 'fftw'
+  'pipewire' 'wireplumber' 'networkmanager' 'lm_sensors' 'brightnessctl' 'ddcutil'
+  'wl-clipboard' 'cliphist' 'app2unit' 'swappy' 'grim' 'slurp'
+  'fish' 'bash' 'python' 'jq' 'libnotify' 'libxml2'
+  'ttf-rubik-vf' 'ttf-material-symbols-rounded' 'ttf-cascadia-code-nerd'
+)
+makedepends=('git' 'cmake' 'ninja' 'pkgconf')
+optdepends=('gpu-screen-recorder: screen recording from the shell'
+            'matugen: colour schemes from the wallpaper')
+provides=('caelestia-shell')
+conflicts=('caelestia-shell' 'niri-caelestia-shell')
+replaces=('niri-caelestia-shell')
+source=("shell::git+https://github.com/caelestia-dots/shell.git#commit=$_commit"
+        'Hypr.qml' 'CustomShortcut.qml')
+sha256sums=('SKIP'    # a git commit pin is itself a hash of the whole tree
+            'SKIP' 'SKIP')
+
+prepare() {
+  cd shell
+  # The Hyprland service becomes a mango one with the same names and shapes.
+  cp "$srcdir/Hypr.qml" services/Hypr.qml
+  cp "$srcdir/CustomShortcut.qml" components/misc/CustomShortcut.qml
+  # Properties typed as Hyprland objects hold the mango service's plain objects instead.
+  grep -rlE 'property (list<)?Hyprland(Toplevel|Workspace|Monitor)' --include='*.qml' . |
+    xargs -r sed -i -E 's/property (list<Hyprland(Toplevel|Workspace|Monitor)>|Hyprland(Toplevel|Workspace|Monitor)) /property var /'
+  if grep -rqE 'property (list<)?Hyprland(Toplevel|Workspace|Monitor) ' --include='*.qml' .; then
+    echo 'caelestia-mango: Hyprland-typed properties remain; upstream has changed' >&2; return 1
+  fi
+}
+
+build() {
+  cmake -S shell -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc \
+    -DVERSION="$_upstream" -DGIT_REVISION="$_commit" -DDISTRIBUTOR=Constellation \
+    -DINSTALL_QSCONFDIR=/etc/xdg/quickshell/caelestia
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm0644 shell/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

@@ -1,6 +1,6 @@
 # Созвездие / Constellation
 
-**An Arch Linux desktop for the Framework Laptop 13 Pro: niri and the Caelestia shell on an OpenZFS root with boot environments, a systemd without the `birthDate` field, and a Russian course from the alphabet to B2.**
+**An Arch Linux desktop for the Framework Laptop 13 Pro: MangoWM and the Caelestia shell on an OpenZFS root with boot environments, a systemd without the `birthDate` field, and a Russian course from the alphabet to B2.**
 
 The name comes from Fabergé's Constellation Egg of 1917, the last of the Imperial eggs: a globe of deep blue glass set with the stars of Leo, Tsarevich Alexei's sign. It was left unfinished when the revolution came. The boot menu wears its colours.
 
@@ -11,7 +11,7 @@ The name comes from Fabergé's Constellation Egg of 1917, the last of the Imperi
 | | |
 | --- | --- |
 | Base | Arch Linux, rolling: the newest kernel graphics, Mesa and firmware for new hardware, from Arch's own repositories |
-| Desktop | [niri](https://github.com/YaLTeR/niri), a scrolling tiling compositor, with the [Caelestia](https://github.com/caelestia-dots/shell) shell ([niri port](https://github.com/Cantfirmed/niri-caelestia-shell)); greetd login; kitty, fish, Dolphin, Firefox ([Desktop](docs/DESKTOP.md)) |
+| Desktop | [MangoWM](https://github.com/mangowm/mango), a scrolling, Hyprland-style compositor, with the [Caelestia](https://github.com/caelestia-dots/shell) shell, ported to Mango by Constellation; greetd login; kitty, fish, Dolphin, Firefox ([Desktop](docs/DESKTOP.md)) |
 | Storage | OpenZFS root (optionally encrypted), separate `/home`, ZFSBootMenu, a snapshot before every pacman change ([Updates](docs/UPDATES.md)) |
 | Updates | `sudo constellation-be upgrade` runs `paru -Syu` in a **copy** of the system, checks it can boot, and makes it the default. The system you are using is never changed; the previous one stays one key press away in the boot menu |
 | systemd | A rebuilt systemd with the `birthDate` user-record field removed, in place of Arch's, from the first install step; a daily check flags when Arch's systemd moves ahead ([systemd](docs/SYSTEMD.md)) |

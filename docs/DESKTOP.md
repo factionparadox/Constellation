@@ -1,6 +1,8 @@
 # Desktop
 
-niri, a scrolling tiling compositor: windows open side by side in an endless strip and you scroll along it, instead of being squeezed into the screen. The Caelestia shell (its niri port by Cantfirmed, pinned in `pkgs/niri-caelestia-shell`) draws the bar, launcher, dashboard, notifications, lock screen and power menu. Login is greetd with Constellation's own graphical login screen (`/usr/share/constellation/greeter`, made with Quickshell like the shell): the boot menu's blue and gold, the clock, the date in Russian and English, and Leo in the corner. If it ever fails to start, the text login screen (tuigreet) takes over, so you can always log in; its log is `/var/cache/constellation-greeter/greeter.log`. Preview it from a desktop session with `CONSTELLATION_GREETER_PREVIEW=1 qs -p /usr/share/constellation/greeter/shell.qml` (any password but "wrong" succeeds). Configuration: `/etc/niri/config.kdl` (copy it to `~/.config/niri/` to change it) and `~/.config/caelestia/shell.json`.
+MangoWM, a scrolling compositor with a Hyprland-style feel: windows open side by side in columns you scroll along (the scroller layout on every workstation). The Caelestia shell draws the bar, launcher, dashboard, notifications, lock screen and power menu. Upstream Caelestia is written for Hyprland; `pkgs/caelestia-mango` builds a reviewed upstream commit with its Hyprland service replaced by a Mango one (`Hypr.qml`, which follows Mango through `mmsg`), so Caelestia's own updates carry over. Login is greetd with Constellation's own login screen, which also runs on Mango. Configuration: `/etc/mango/config.conf` (copy it to `~/.config/mango/config.conf` to change it) and `~/.config/caelestia/shell.json`.
+
+On Mango, Hyprland's special workspaces become Mango's scratchpads, and the caps-lock and num-lock indicators are not shown (Mango does not report them).
 
 | Keys | Action |
 | --- | --- |

@@ -1,14 +1,14 @@
 #!/bin/sh
-# greetd's greeter: niri with Constellation's graphical login screen (Quickshell). If the
+# greetd's greeter: MangoWM with Constellation's graphical login screen (Quickshell). If the
 # graphical screen cannot start or stops without logging anyone in, the text login screen
 # (tuigreet) takes over, so you can always log in.
 cache=/var/cache/constellation-greeter
 marker="${XDG_RUNTIME_DIR:-/tmp}/constellation-greeter-done"
 rm -f "$marker"
 log=$cache/greeter.log; [ -w "$cache" ] || log=/dev/null
-niri -c /usr/share/constellation/greeter/niri.kdl > "$log" 2>&1
+mango -c /usr/share/constellation/greeter/mango.conf > "$log" 2>&1
 if [ -e "$marker" ]; then
   rm -f "$marker"
   exit 0                 # a session is starting: greetd takes it from here
 fi
-exec tuigreet --time --remember --asterisks --greeting 'Созвездие / Constellation' --cmd niri-session
+exec tuigreet --time --remember --asterisks --greeting 'Созвездие / Constellation' --cmd mango

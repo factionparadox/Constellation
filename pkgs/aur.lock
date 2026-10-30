@@ -3,13 +3,13 @@
 # Pin or update with:  build/aur-pin.sh NAME   (shows the PKGBUILD or the diff before pinning)
 # Files an AUR package is missing go in pkgs/aur-overlays/NAME/ (checked by the PKGBUILD's sums).
 # A -git package also needs src=COMMIT: the upstream commit to build (it would follow a branch).
-# quickshell-git: src is the v0.3.2 release.
+# quickshell-git: src is a master commit: Caelestia needs Quickshell's git version, not a release.
 # name                                AUR commit                                upstream (git packages)
 systemd-remove-birthdate              fb20d1fba69fa3e7e26cd6e0c49aa966ef2b744f
 zfs-utils                             c878c355183ca745285d8eaf538b98788e373d3a
 zfs-dkms                              052b457ee3e7b0214249a7a7b29b4100fa93eb74
 paru                                  329be2113c590046cb29858c23d9b96a8d7bd586
-quickshell-git                        237fb7f2ddc4ef7b0e92a3f4b1e142da92e38495  src=4f508be500dea6e5732cc3d50382a0048b17e7b1
+quickshell-git                        237fb7f2ddc4ef7b0e92a3f4b1e142da92e38495  src=9b0f339b19057f4731bf3b48293307d7ef241671
 libcava                               39403443c8208f5d9adaaed7c8347c439efe52cf
 app2unit                              e1b8a90693ed95ba41d6e51545d7d18bd10d0f31
 caelestia-cli                         a6f5c172fed5505a12c24a08ae2de6952b2c9bba

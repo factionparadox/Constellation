@@ -18,7 +18,7 @@ class GreeterWrapper(unittest.TestCase):
         self.bin = base / 'bin'; self.bin.mkdir()
         self.run_dir = base / 'run'; self.run_dir.mkdir()
         self.log = base / 'log'
-        (self.bin / 'niri').write_text('#!/bin/sh\necho "niri $*" >> "$STUB_LOG"\n'
+        (self.bin / 'mango').write_text('#!/bin/sh\necho "mango $*" >> "$STUB_LOG"\n'
                                        '[ "$STUB_LOGIN" = 1 ] && touch "$XDG_RUNTIME_DIR/constellation-greeter-done"\nexit 0\n')
         (self.bin / 'tuigreet').write_text('#!/bin/sh\necho "tuigreet $*" >> "$STUB_LOG"\n')
         for f in self.bin.iterdir():
@@ -33,14 +33,14 @@ class GreeterWrapper(unittest.TestCase):
 
     def test_after_a_login_greetd_takes_over(self):
         log = self.wrapper(login=True)
-        self.assertIn('niri -c /usr/share/constellation/greeter/niri.kdl', log)
+        self.assertIn('mango -c /usr/share/constellation/greeter/mango.conf', log)
         self.assertNotIn('tuigreet', log)
         self.assertFalse((self.run_dir / 'constellation-greeter-done').exists())   # cleaned up for next time
 
     def test_without_a_login_the_text_screen_takes_over(self):
         log = self.wrapper(login=False)
         self.assertIn('tuigreet --time --remember --asterisks', log)
-        self.assertIn('--cmd niri-session', log)
+        self.assertIn('--cmd mango', log)
 
 
 class Branding(unittest.TestCase):
@@ -58,18 +58,18 @@ class Branding(unittest.TestCase):
 
 
 class GreeterFiles(unittest.TestCase):
-    def test_niri_runs_the_greeter_and_quits_with_it(self):
-        kdl = (GREETER / 'greeter-niri.kdl').read_text()
-        self.assertIn('qs -p /usr/share/constellation/greeter/shell.qml; niri msg action quit --skip-confirmation', kdl)
-        self.assertRegex(kdl, r'binds \{\s*\}')            # nothing to escape to
+    def test_mango_runs_the_greeter_and_quits_with_it(self):
+        conf = (GREETER / 'greeter-mango.conf').read_text()
+        self.assertIn('exec_once=qs -p /usr/share/constellation/greeter/shell.qml; mmsg dispatch quit', conf)
+        self.assertNotRegex(conf, r'(?m)^bind')                # nothing to escape to
 
     def test_greetd_runs_the_wrapper(self):
         toml = (ROOT / 'pkgs/constellation-desktop/greetd.toml').read_text()
         self.assertIn('command = "/usr/lib/constellation/greeter"', toml)
 
     def test_qml_braces_balance_and_marker_matches(self):
-        for name in ('shell.qml', 'Greeter.qml', 'Sky.qml'):
-            text = (GREETER / name).read_text()
+        for path in (GREETER / 'shell.qml', GREETER / 'Greeter.qml', GREETER / 'Sky.qml', ROOT / 'pkgs/caelestia-mango/Hypr.qml', ROOT / 'pkgs/caelestia-mango/CustomShortcut.qml'):
+            name = path.name; text = path.read_text()
             code = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|//[^\n]*', '', text)
             for a, b in ('{}', '()', '[]'):
                 self.assertEqual(code.count(a), code.count(b), f'{name}: {a}{b}')

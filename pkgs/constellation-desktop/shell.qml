@@ -1,4 +1,4 @@
-// Constellation's graphical login, run by greetd inside a minimal niri (see niri.kdl and
+// Constellation's graphical login, run by greetd inside a minimal MangoWM (see mango.conf and
 // /usr/lib/constellation/greeter). Quickshell's greetd service does the talking; Greeter.qml
 // is the screen.
 //
@@ -15,7 +15,7 @@ ShellRoot {
 
     readonly property bool preview: Quickshell.env("CONSTELLATION_GREETER_PREVIEW") === "1"
     readonly property string cacheDir: "/var/cache/constellation-greeter"
-    readonly property var session: ["niri-session"]
+    readonly property var session: ["mango"]
 
     property var users: []
     property int userIndex: 0
@@ -100,8 +100,8 @@ ShellRoot {
     }
 
     // Tell the wrapper a session is starting (so it does not fall back to the text login),
-    // remember who logged in, then hand over to niri-session. Quickshell quits after launch,
-    // and niri.kdl quits niri when it does, so greetd can start the session.
+    // remember who logged in, then hand over to mango. Quickshell quits after launch,
+    // and mango.conf quits mango when it does, so greetd can start the session.
     Process {
         id: done
         command: ["sh", "-c", 'touch "${XDG_RUNTIME_DIR:-/tmp}/constellation-greeter-done"']

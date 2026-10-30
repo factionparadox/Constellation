@@ -50,7 +50,7 @@ Uploads `out/repo` as the assets of the `repo` release on GitHub, which is where
 
 `build/check-updates.sh` (run daily by GitHub Actions) reports AUR packages with new commits to review and fails when Arch's systemd is ahead of Constellation's. Updating a package is: `build/aur-pin.sh NAME`, `build/build-repo.sh --only NAME`, `build/publish-repo.sh`, then `sudo constellation-be upgrade` on the laptop.
 
-Constellation's own packages: bump `pkgver` or `pkgrel` in `pkgs/NAME/PKGBUILD` when you change them, so installed systems see the update. The Caelestia shell is pinned to a commit of its niri port: update `_commit` and `pkgver` together after reading what changed.
+Constellation's own packages: bump `pkgver` or `pkgrel` in `pkgs/NAME/PKGBUILD` when you change them, so installed systems see the update. The Caelestia shell (`pkgs/caelestia-mango`) is pinned to an upstream commit; it needs Quickshell's git version, pinned alongside it in `pkgs/aur.lock` (`src=`), so move both together.
 
 ## Tests
 

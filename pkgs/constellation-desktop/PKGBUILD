@@ -1,15 +1,15 @@
-# Constellation desktop: niri with the Caelestia shell, and the apps and services around it.
+# Constellation desktop: MangoWM with the Caelestia shell, and the apps and services around it.
 pkgname=constellation-desktop
-pkgver=0.1.0
-pkgrel=4
-pkgdesc='Constellation desktop: niri, the Caelestia shell, greetd and the everyday apps'
+pkgver=0.2.0
+pkgrel=1
+pkgdesc='Constellation desktop: MangoWM, the Caelestia shell, greetd and the everyday apps'
 arch=('any')
 url='https://github.com/factionparadox/Constellation'
 license=('MIT')
 depends=(
   'constellation-base'
   # compositor, shell, login
-  'niri' 'niri-caelestia-shell' 'xwayland-satellite' 'greetd' 'greetd-tuigreet'
+  'mangowm' 'caelestia-mango' 'xorg-xwayland' 'greetd' 'greetd-tuigreet'
   'xdg-desktop-portal-gnome' 'xdg-desktop-portal-gtk' 'polkit-kde-agent' 'gnome-keyring'
   # sound, network, Bluetooth, power, hardware
   'pipewire' 'pipewire-pulse' 'pipewire-alsa' 'wireplumber' 'pavucontrol' 'playerctl'
@@ -23,8 +23,8 @@ depends=(
   'noto-fonts' 'noto-fonts-cjk' 'noto-fonts-emoji' 'ttf-jetbrains-mono-nerd'
 )
 install=constellation-desktop.install
-source=('config.kdl' 'start-shell' 'greetd.toml' 'greetd-constellation.conf' 'shell.json' 'wallpaper.png'
-        'shell.qml' 'Greeter.qml' 'Sky.qml' 'greeter-niri.kdl'
+source=('mango.conf' 'start-shell' 'greetd.toml' 'greetd-constellation.conf' 'shell.json' 'wallpaper.png'
+        'shell.qml' 'Greeter.qml' 'Sky.qml' 'greeter-mango.conf'
         'constellation-greeter' 'constellation-greeter.tmpfiles'
         'constellation-logo.png' 'fastfetch-logo.txt' 'fastfetch.jsonc')
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
@@ -32,7 +32,7 @@ sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
             'SKIP' 'SKIP' 'SKIP')
 
 package() {
-  install -Dm0644 config.kdl "$pkgdir/etc/niri/config.kdl"
+  install -Dm0644 mango.conf "$pkgdir/etc/mango/config.conf"
   install -Dm0755 start-shell "$pkgdir/usr/lib/constellation/start-shell"
   install -Dm0644 greetd.toml "$pkgdir/etc/greetd/constellation.toml"
   install -Dm0644 greetd-constellation.conf "$pkgdir/usr/lib/systemd/system/greetd.service.d/constellation.conf"
@@ -41,7 +41,7 @@ package() {
   for f in shell.qml Greeter.qml Sky.qml; do
     install -Dm0644 "$f" "$pkgdir/usr/share/constellation/greeter/$f"
   done
-  install -Dm0644 greeter-niri.kdl "$pkgdir/usr/share/constellation/greeter/niri.kdl"
+  install -Dm0644 greeter-mango.conf "$pkgdir/usr/share/constellation/greeter/mango.conf"
   install -Dm0755 constellation-greeter "$pkgdir/usr/lib/constellation/greeter"
   install -Dm0644 constellation-greeter.tmpfiles "$pkgdir/usr/lib/tmpfiles.d/constellation-greeter.conf"
   # the Constellation mark, and fastfetch drawing it in its own colours
