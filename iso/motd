@@ -1,7 +1,6 @@
 
   Созвездие / Constellation: live system
 
-  Connect to Wi-Fi:   iwctl station wlan0 connect "Network name"
-  Install:            constellation-install
-  Help:               constellation-welcome
-
+  Install:   constellation-install         (no internet needed: everything is on this stick)
+  Rehearse:  constellation-install --dry-run
+  Help:      constellation-welcome

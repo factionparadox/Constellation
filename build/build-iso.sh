@@ -111,6 +111,12 @@ fi
   grep -v -E '^\s*(#|$)' "$PKGREPO/systemd-packages.txt"
 } >> "$PROFILE/packages.x86_64"
 
+# --- run the live system from the stick, never copied to RAM: the installer reads the packages,
+# content and music straight off the stick, which archiso unmounts after copytoram.
+grep -rlE 'archisobasedir=' "$PROFILE"/{grub,syslinux,efiboot} 2>/dev/null |
+  xargs -r sed -i -E '/archisobasedir=/{/copytoram=/!s/(archisobasedir=[^ ]*)/\1 copytoram=n/}'
+grep -rqE 'archisobasedir=[^ ]* copytoram=n' "$PROFILE/grub" || die 'could not add copytoram=n to the boot menu; archiso has changed'
+
 # --- Constellation's repository, before Arch's (it is the only source of the systemd family)
 add_repo() {   # add_repo PACMAN.CONF SERVER
   python3 - "$1" "$2" "$SIGLEVEL" <<'PY'

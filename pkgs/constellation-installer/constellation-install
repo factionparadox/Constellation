@@ -94,9 +94,18 @@ if [ "$DRY" -eq 0 ]; then
   for f in systemd-packages.txt pacman-live.conf pacman.conf; do
     [ -f "$SHARE/$f" ] || die "$SHARE/$f is missing; this live USB was not built by build/build-iso.sh"
   done
-  # If the live system was copied to RAM (copytoram), the stick is no longer mounted: remount it.
-  if [ ! -d "$OFFLINE" ] && label=$(grep -o 'archisolabel=[^ ]*' /proc/cmdline | cut -d= -f2) && [ -n "$label" ]; then
-    mkdir -p "$BOOTMNT"; mount -o ro "/dev/disk/by-label/$label" "$BOOTMNT" || true
+  # If the live system was copied to RAM (copytoram), archiso unmounts the stick: find it again,
+  # by looking for the disk that has Constellation's packages on it (labels vary between archiso
+  # versions), and mount it where pacman-live.conf expects it.
+  if [ ! -f "$OFFLINE/constellation-offline.db.tar.gz" ]; then
+    mountpoint -q "$BOOTMNT" && umount "$BOOTMNT" 2>/dev/null
+    mkdir -p "$BOOTMNT"
+    while read -r dev fstype; do
+      case "$fstype" in iso9660|udf) ;; *) continue ;; esac
+      mount -o ro "$dev" "$BOOTMNT" 2>/dev/null || continue
+      [ -f "$OFFLINE/constellation-offline.db.tar.gz" ] && { echo "Found the packages on $dev"; break; }
+      umount "$BOOTMNT"
+    done < <(lsblk -rpno NAME,FSTYPE)
   fi
   [ -f "$OFFLINE/constellation-offline.db.tar.gz" ] || die "the packages are missing from this USB stick ($OFFLINE)"
 fi
