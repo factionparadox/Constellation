@@ -1,7 +1,7 @@
 # The live USB's installer (not installed on the target system).
 pkgname=constellation-installer
 pkgver=0.1.0
-pkgrel=4
+pkgrel=5
 pkgdesc='Constellation installer: whole-disk OpenZFS root with ZFSBootMenu'
 arch=('any')
 url='https://github.com/factionparadox/Constellation'

@@ -96,11 +96,23 @@ if [ "$DRY" -eq 0 ]; then
   done
   # The live system sets up pacman's keyring at boot (pacman-init.service). The installer can be
   # started before that finishes, and pacstrap then finds no keyring: wait for it first.
+  # Wait at most two minutes; if it is still not done, set the keyring up directly.
   if systemctl cat pacman-init.service >/dev/null 2>&1; then
-    echo 'Waiting for the live system to finish setting up its signing keys...'
-    systemctl start pacman-init.service || die 'the live system could not set up its signing keys (pacman-init failed)'
+    echo 'Waiting (up to two minutes) for the live system to finish setting up its signing keys...'
+    if ! timeout 120 systemctl start pacman-init.service; then
+      echo 'That is taking too long; setting up the signing keys directly.'
+      systemctl cancel pacman-init.service 2>/dev/null || true
+    fi
   fi
-  pacman-key --list-keys >/dev/null 2>&1 || die "the live system has no pacman keyring; run 'pacman-key --init; pacman-key --populate' and try again"
+  const_key=/usr/share/constellation/constellation.asc
+  const_fpr=$( [ -f "$const_key" ] && gpg --with-colons --import-options show-only --import "$const_key" 2>/dev/null |
+               awk -F: '$1 == "fpr" {print $10; exit}' )
+  if ! pacman-key --list-keys 'Arch Linux' >/dev/null 2>&1; then
+    pacman-key --init && pacman-key --populate archlinux || die "could not set up the live system's signing keys"
+  fi
+  if [ -n "$const_fpr" ] && ! pacman-key --list-keys "$const_fpr" >/dev/null 2>&1; then
+    pacman-key --add "$const_key" && pacman-key --lsign-key "$const_fpr" || die "could not trust Constellation's signing key"
+  fi
   # If the live system was copied to RAM (copytoram), archiso unmounts the stick: find it again,
   # by looking for the disk that has Constellation's packages on it (labels vary between archiso
   # versions), and mount it where pacman-live.conf expects it.
