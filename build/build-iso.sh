@@ -155,7 +155,13 @@ if [ "$SIGLEVEL" != 'Optional TrustAll' ]; then
   install -Dm0644 "$REPO/keys/constellation.asc" "$AIR/usr/share/constellation/constellation.asc"
   fpr=$(gpg --with-colons --import-options show-only --import "$REPO/keys/constellation.asc" | awk -F: '$1 == "fpr" {print $10; exit}')
   install -d "$AIR/etc/systemd/system/pacman-init.service.d"
+  # The empty After= drops releng's ordering after time-sync.target: with no network (this ISO
+  # installs offline) the clock never syncs, and the keyring would never be set up.
   cat > "$AIR/etc/systemd/system/pacman-init.service.d/constellation.conf" <<EOF
+[Unit]
+After=
+After=etc-pacman.d-gnupg.mount
+
 [Service]
 ExecStart=/usr/bin/pacman-key --add /usr/share/constellation/constellation.asc
 ExecStart=/usr/bin/pacman-key --lsign-key $fpr
