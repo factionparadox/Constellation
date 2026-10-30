@@ -38,7 +38,7 @@ class InstallerDryRun(unittest.TestCase):
             self.assertIn(ds, out)
         pacstrap = next(l for l in out.splitlines() if l.startswith('+ pacstrap'))
         self.assertNotIn(' -K', pacstrap)                     # the live keyring (with Constellation's key) is copied
-        for pkg in ('base', 'archlinux-keyring', 'linux-lts', 'zfs-dkms', 'constellation-desktop', 'constellation-russian',
+        for pkg in ('base', 'archlinux-keyring', 'linux', 'linux-headers', 'zfs-dkms', 'constellation-desktop', 'constellation-russian',
                     'systemd-remove-birthdate', 'systemd-remove-birthdate-libs'):
             self.assertIn(f' {pkg}', pacstrap)
         self.assertIn('HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block zfs filesystems)', out)

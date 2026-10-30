@@ -83,31 +83,15 @@ s = s.replace('file_permissions=(', 'file_permissions=(\n  ["/usr/local/bin/cons
 open(p, 'w').write(s)
 PY
 
-# --- the LTS kernel everywhere (OpenZFS follows it reliably), plus OpenZFS and the installer
-sed -i -E 's/^linux$/linux-lts/; s/^broadcom-wl$/broadcom-wl-dkms/' "$PROFILE/packages.x86_64"
+# --- Arch's own kernel (linux, 7.x: the Framework 13 Pro needs it), plus OpenZFS and the installer.
+# OpenZFS is pinned to a release that supports it (zfs-dkms 2.4.4 supports Linux up to 7.2).
+grep -qx 'linux' "$PROFILE/packages.x86_64" || die "releng no longer lists the linux kernel; archiso has changed"
 # Arch's own systemd packages (releng lists systemd-resolvconf) would conflict with the
 # birthDate-free family, which provides them all.
 sed -i -E '/^systemd(-[a-z]+)?$/d' "$PROFILE/packages.x86_64"
-grep -rlE 'vmlinuz-linux|initramfs-linux\.img' "$PROFILE"/{syslinux,grub,efiboot} 2>/dev/null |
-  xargs -r sed -i -E 's/vmlinuz-linux\b/vmlinuz-linux-lts/g; s/initramfs-linux\.img/initramfs-linux-lts.img/g'
-# The live system's initramfs needs archiso's hooks. Older archiso set them in a linux.preset,
-# which must become the LTS kernel's; current archiso puts them in mkinitcpio.conf.d, which
-# applies to every kernel's preset (linux-lts included), so there is nothing to change.
-preset_dir=$PROFILE/airootfs/etc/mkinitcpio.d
-if [ -f "$preset_dir/linux.preset" ]; then
-  sed -E 's/vmlinuz-linux\b/vmlinuz-linux-lts/g; s/initramfs-linux([.-])/initramfs-linux-lts\1/g' \
-    "$preset_dir/linux.preset" > "$preset_dir/linux-lts.preset"
-  rm "$preset_dir/linux.preset"
-elif ! grep -rqs 'archiso' "$PROFILE/airootfs/etc/mkinitcpio.conf.d/" "$PROFILE/airootfs/etc/mkinitcpio.conf" 2>/dev/null; then
-  die "cannot find where releng sets the live system's mkinitcpio hooks; archiso has changed.
-releng's mkinitcpio files: $(cd "$PROFILE/airootfs" && find . -path '*mkinitcpio*' | tr '\n' ' ')"
-fi
-if grep -rqE 'vmlinuz-linux([^-]|$)|initramfs-linux\.img' "$PROFILE"/{syslinux,grub,efiboot} "$preset_dir" 2>/dev/null; then
-  die 'a boot file still names the standard kernel; archiso has changed'
-fi
 {
   echo; echo '# Constellation'
-  printf '%s\n' linux-lts-headers zfs-dkms zfs-utils zfsbootmenu-efi constellation-installer arch-install-scripts
+  printf '%s\n' linux-headers zfs-dkms zfs-utils zfsbootmenu-efi constellation-installer arch-install-scripts
   grep -v -E '^\s*(#|$)' "$PKGREPO/systemd-packages.txt"
 } >> "$PROFILE/packages.x86_64"
 

@@ -30,4 +30,4 @@ ZFSBootMenu can also boot any snapshot directly from its menu (it clones it firs
 
 ## Kernel choice
 
-Constellation uses `linux-lts`: OpenZFS supports each LTS kernel reliably, and the Framework 13 Pro's Core Ultra Series 3 is supported from Linux 6.17. To try Arch's newest kernel, install `linux linux-headers` with `constellation-be upgrade`: if OpenZFS does not build for it, the check in step 3 refuses to activate that environment.
+Constellation uses Arch's own kernel, `linux` (7.x), which the Framework 13 Pro needs; `zfs-dkms` builds OpenZFS for it. Arch sometimes ships a new kernel before OpenZFS supports it: then the module does not build, the check in step 3 refuses to activate that environment, and you stay on the one that works until OpenZFS catches up.

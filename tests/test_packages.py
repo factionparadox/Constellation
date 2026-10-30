@@ -85,7 +85,7 @@ class PackageTests(unittest.TestCase):
     def test_installer_lists_the_desktop_and_russian(self):
         listed = [l.strip() for l in (PKGS / 'constellation-installer/packages.txt').read_text().splitlines()
                   if l.strip() and not l.startswith('#')]
-        for p in ('base', 'linux-lts', 'zfs-dkms', 'constellation-base', 'constellation-desktop', 'constellation-russian'):
+        for p in ('base', 'linux', 'zfs-dkms', 'constellation-base', 'constellation-desktop', 'constellation-russian'):
             self.assertIn(p, listed)
         self.assertNotIn('systemd', listed)
 

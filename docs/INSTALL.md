@@ -20,7 +20,7 @@ No swap partition: Constellation swaps to compressed RAM (zram).
 
 ## What it installs
 
-`pacstrap` installs `base`, `linux-lts` with OpenZFS (`zfs-dkms`), `constellation-base`, `constellation-desktop` and `constellation-russian`, and the birthDate-free systemd family **in the same step as `base`**, so Arch's systemd is never installed. Constellation's own packages come from the copy of the repository on the USB stick (exactly what was built), Arch's from its mirrors. The live system's keyring, which trusts Constellation's signing key, is copied to the new system.
+`pacstrap` installs `base`, `linux` (Arch's 7.x kernel) with OpenZFS (`zfs-dkms`), `constellation-base`, `constellation-desktop` and `constellation-russian`, and the birthDate-free systemd family **in the same step as `base`**, so Arch's systemd is never installed. Constellation's own packages come from the copy of the repository on the USB stick (exactly what was built), Arch's from its mirrors. The live system's keyring, which trusts Constellation's signing key, is copied to the new system.
 
 Then: hostname, `en_GB.UTF-8` (and `ru_RU.UTF-8`), keyboard, time zone, the mkinitcpio `zfs` hook (and the key file, if encrypted, in a root-only initramfs), the ZFS services, NetworkManager, greetd, your account (in `wheel`, with fish), a locked root account, ZFSBootMenu on the EFI partition with two firmware boot entries, and a snapshot called `installed`.
 

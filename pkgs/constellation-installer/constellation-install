@@ -94,6 +94,13 @@ if [ "$DRY" -eq 0 ]; then
   for f in systemd-packages.txt pacman-live.conf pacman.conf; do
     [ -f "$SHARE/$f" ] || die "$SHARE/$f is missing; this live USB was not built by build/build-iso.sh"
   done
+  # The live system sets up pacman's keyring at boot (pacman-init.service). The installer can be
+  # started before that finishes, and pacstrap then finds no keyring: wait for it first.
+  if systemctl cat pacman-init.service >/dev/null 2>&1; then
+    echo 'Waiting for the live system to finish setting up its signing keys...'
+    systemctl start pacman-init.service || die 'the live system could not set up its signing keys (pacman-init failed)'
+  fi
+  pacman-key --list-keys >/dev/null 2>&1 || die "the live system has no pacman keyring; run 'pacman-key --init; pacman-key --populate' and try again"
   # If the live system was copied to RAM (copytoram), archiso unmounts the stick: find it again,
   # by looking for the disk that has Constellation's packages on it (labels vary between archiso
   # versions), and mount it where pacman-live.conf expects it.

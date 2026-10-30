@@ -45,12 +45,12 @@ elif name == 'mount':
     if '-t' in args and 'zfs' in args:          # mount -t zfs -o zfsutil DATASET DIR: a fake system
         root = Path(args[-1])
         (root / 'boot').mkdir(parents=True, exist_ok=True)
-        (root / 'boot/vmlinuz-linux-lts').write_text('k')
+        (root / 'boot/vmlinuz-linux').write_text('k')
         if os.environ.get('STUB_NO_INITRAMFS') != '1':
-            (root / 'boot/initramfs-linux-lts.img').write_text('i')
-        mods = root / 'usr/lib/modules/6.18.9-1-lts'
+            (root / 'boot/initramfs-linux.img').write_text('i')
+        mods = root / 'usr/lib/modules/7.2.10-arch1-1'
         mods.mkdir(parents=True, exist_ok=True)
-        (mods / 'pkgbase').write_text('linux-lts\n')
+        (mods / 'pkgbase').write_text('linux\n')
         if os.environ.get('STUB_NO_ZFS_MODULE') != '1':
             (mods / 'updates/dkms').mkdir(parents=True, exist_ok=True)
             (mods / 'updates/dkms/zfs.ko.zst').write_text('m')
@@ -107,9 +107,9 @@ class BootEnvironmentTests(unittest.TestCase):
         r = self.be('upgrade', STUB_NO_ZFS_MODULE='1')
         self.assertEqual(r.returncode, 1)
         self.assertEqual(self.st()['bootfs'], 'zroot/ROOT/constellation')
-        self.assertIn('no ZFS module for the linux-lts kernel', r.stdout)
+        self.assertIn('no ZFS module for the linux kernel', r.stdout)
         r = self.be('upgrade', STUB_NO_INITRAMFS='1')
-        self.assertIn('missing initramfs for linux-lts', r.stdout)
+        self.assertIn('missing initramfs for linux', r.stdout)
 
     def test_upgrade_needs_a_real_user(self):
         r = self.be('upgrade', SUDO_USER='')

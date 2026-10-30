@@ -5,8 +5,9 @@ base
 base-devel
 # Arch's signing keys: pacman on the installed system checks every update with them
 archlinux-keyring
-linux-lts
-linux-lts-headers
+# Arch's kernel (7.x: the Framework 13 Pro needs it); zfs-dkms builds OpenZFS for it
+linux
+linux-headers
 linux-firmware
 intel-ucode
 zfs-dkms
