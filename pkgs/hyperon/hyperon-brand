@@ -26,7 +26,7 @@ edit hyprutils/src/path/Path.cpp 2 '"/hypr/"' '"/hyperon/"'
 
 # --- the compositor's name, wherever a person sees it
 H=Hyprland/src
-edit $H/helpers/SystemInfo.cpp 1 '"Hyprland {} built from branch' '"Hyperon {} (Constellation'"'"'s respin of Hyprland) built from branch'
+edit $H/helpers/SystemInfo.cpp 1 '"Hyprland {} built from branch' '"Hyperon {} built from branch'
 edit $H/main.cpp 1 '"Welcome to Hyprland!"' '"Welcome to Hyperon!"'
 edit $H/main.cpp 1 '"usage: Hyprland [arg [...]].\n"' '"usage: hyperon [arg [...]].\n"'
 edit $H/errorOverlay/Overlay.cpp 1 '"\nHyprland may not work correctly."' '"\nHyperon may not work correctly."'

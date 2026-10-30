@@ -1,5 +1,5 @@
-# Caelestia, the Quickshell desktop shell, unmodified, for Hyperon (Constellation's respin of
-# Hyprland, which Caelestia is written for). Upstream at a reviewed commit: bump _commit and
+# Caelestia, the Quickshell desktop shell, unmodified, for Hyperon (Constellation's compositor,
+# which keeps the interfaces Caelestia is written for). Upstream at a reviewed commit: bump _commit and
 # pkgver together. Caelestia needs Quickshell's git version (pinned in pkgs/aur.lock).
 pkgname=caelestia-shell
 pkgver=2.5.0.r20261029

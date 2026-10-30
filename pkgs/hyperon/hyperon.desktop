@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Hyperon
-Comment=Constellation's compositor, a respin of Hyprland 0.56.2
+Comment=Constellation's Wayland compositor
 Exec=hyperon
 Type=Application
 DesktopNames=Hyperon;Hyprland

@@ -1,4 +1,4 @@
-# Hyperon: Constellation's Wayland compositor, a respin of Hyprland 0.56.2 (BSD-3-Clause).
+# Hyperon: Constellation's Wayland compositor, built from the Hyprland 0.56.2 sources (BSD-3-Clause).
 #
 # Frozen at 0.56.2, the last release that reads the classic hyprland.conf format (0.57 dropped
 # it). Hyprland needs exact versions of its own libraries, which Arch keeps moving on, so the
@@ -11,7 +11,7 @@
 pkgname=hyperon
 pkgver=0.56.2
 pkgrel=1
-pkgdesc="Constellation's Wayland compositor (a respin of Hyprland 0.56.2)"
+pkgdesc="Constellation's Wayland compositor"
 arch=('x86_64')
 url='https://github.com/factionparadox/Constellation'
 license=('BSD-3-Clause')
