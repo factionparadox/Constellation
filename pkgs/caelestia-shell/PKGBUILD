@@ -3,7 +3,7 @@
 # pkgver together. Caelestia needs Quickshell's git version (pinned in pkgs/aur.lock).
 pkgname=caelestia-shell
 pkgver=2.5.0.r20261029
-pkgrel=2
+pkgrel=3
 _commit=b51fdb35ca7a14ac5a49e0d94fc5de2d79756aed
 _upstream=2.5.0
 pkgdesc='Caelestia, a Quickshell desktop shell, on the Hyperon compositor'
@@ -12,7 +12,8 @@ url='https://github.com/caelestia-dots/shell'
 license=('GPL-3.0-only')
 depends=(
   'quickshell-git' 'hyperon' 'qt6-base' 'qt6-declarative' 'qt6-shadertools' 'qt6-svg' 'qt6-wayland'
-  'qt6-multimedia'
+  'qt6-multimedia' 'qt6-imageformats'
+  'm3shapes'        # the shapes QML module the bar, dashboard and lock screen import
   'caelestia-cli' 'libqalculate' 'libpipewire' 'aubio' 'libcava' 'fftw'
   'pipewire' 'wireplumber' 'networkmanager' 'lm_sensors' 'brightnessctl' 'ddcutil'
   'wl-clipboard' 'cliphist' 'app2unit' 'swappy' 'grim' 'slurp'

@@ -34,13 +34,13 @@ edit $H/debug/crash/CrashReporter.cpp 1 '"Hyprland has crashed :( Consult the cr
 edit $H/debug/crash/CrashReporter.cpp 1 '   Hyprland Crash Report\n' '   Hyperon Crash Report\n'
 edit $H/xwayland/XWM.cpp 1 '"Hyprland :D"' '"Hyperon"'
 edit $H/protocols/core/Seat.hpp 1 'HL_SEAT_NAME = "Hyprland"' 'HL_SEAT_NAME = "Hyperon"'
-# Programs that look for Hyprland still find it after Hyperon's own name.
-edit $H/Compositor.cpp 1 'setenv("XDG_CURRENT_DESKTOP", "Hyprland", 1)' 'setenv("XDG_CURRENT_DESKTOP", "Hyperon:Hyprland", 1)'
+# The desktop is called Hyperon (portals: hyperon-portals.conf).
+edit $H/Compositor.cpp 1 'setenv("XDG_CURRENT_DESKTOP", "Hyprland", 1)' 'setenv("XDG_CURRENT_DESKTOP", "Hyperon", 1)'
 
 # --- quiet by default: no Hyprland logo or anime wallpaper, no splash, no popups
 V=$H/config/values/ConfigValues.cpp
-# Hyperon's own desktop name is expected, not "managed externally".
-edit $H/Compositor.cpp 1 'std::string{CURRENT_DESKTOP_ENV} != "Hyprland"' 'std::string{CURRENT_DESKTOP_ENV} != "Hyperon:Hyprland"'
+# Hyperon's own desktop name (just "Hyperon") is expected, not "managed externally".
+edit $H/Compositor.cpp 1 'std::string{CURRENT_DESKTOP_ENV} != "Hyprland"' 'std::string{CURRENT_DESKTOP_ENV} != "Hyperon"'
 # The classic config format is Hyperon's format for good: no notice that it is going away.
 edit $H/Compositor.cpp 1 '    if (Config::mgr()->type() == Config::CONFIG_LEGACY)
         Notification::overlay()->addNotification(I18n::i18nEngine()->localize(I18n::TXT_KEY_NOTIF_OUTDATED_CONFIG), CHyprColor{}, 15000, ICON_WARNING);
@@ -73,8 +73,8 @@ edit $J 1 '        if (LUA_PATHS.first.has_value())
 
 # --- the launcher (start-hyprland, installed as hyperon) starts Hyperon's own compositor
 S=Hyprland/start/src
-edit $S/core/Instance.cpp 3 'value_or("Hyprland")' 'value_or("/usr/lib/hyperon/bin/Hyprland")'
-edit $S/helpers/Nix.cpp 1 'CProcess proc("Hyprland", {"--version-json"})' 'CProcess proc("/usr/lib/hyperon/bin/Hyprland", {"--version-json"})'
+edit $S/core/Instance.cpp 3 'value_or("Hyprland")' 'value_or("/usr/lib/hyperon/bin/Hyperon")'
+edit $S/helpers/Nix.cpp 1 'CProcess proc("Hyprland", {"--version-json"})' 'CProcess proc("/usr/lib/hyperon/bin/Hyperon", {"--version-json"})'
 edit $S/main.cpp 1 'start-hyprland - A binary to properly start Hyprland via a watchdog process.' 'hyperon - starts the Hyperon compositor under a watchdog that restarts it after a crash.'
 
 echo "hyperon-brand: all edits applied"

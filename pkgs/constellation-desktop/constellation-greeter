@@ -6,7 +6,7 @@ cache=/var/cache/constellation-greeter
 marker="${XDG_RUNTIME_DIR:-/tmp}/constellation-greeter-done"
 rm -f "$marker"
 log=$cache/greeter.log; [ -w "$cache" ] || log=/dev/null
-"${HYPERON_BIN:-/usr/lib/hyperon/bin/Hyprland}" -c /usr/share/constellation/greeter/hyperon.conf > "$log" 2>&1
+"${HYPERON_BIN:-/usr/lib/hyperon/bin/Hyperon}" -c /usr/share/constellation/greeter/hyperon.conf > "$log" 2>&1
 if [ -e "$marker" ]; then
   rm -f "$marker"
   exit 0                 # a session is starting: greetd takes it from here

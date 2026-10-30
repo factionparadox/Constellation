@@ -18,7 +18,7 @@ class GreeterWrapper(unittest.TestCase):
         self.bin = base / 'bin'; self.bin.mkdir()
         self.run_dir = base / 'run'; self.run_dir.mkdir()
         self.log = base / 'log'
-        (self.bin / 'Hyprland').write_text('#!/bin/sh\necho "Hyprland $*" >> "$STUB_LOG"\n'
+        (self.bin / 'Hyperon').write_text('#!/bin/sh\necho "Hyperon $*" >> "$STUB_LOG"\n'
                                        '[ "$STUB_LOGIN" = 1 ] && touch "$XDG_RUNTIME_DIR/constellation-greeter-done"\nexit 0\n')
         (self.bin / 'tuigreet').write_text('#!/bin/sh\necho "tuigreet $*" >> "$STUB_LOG"\n')
         for f in self.bin.iterdir():
@@ -26,7 +26,7 @@ class GreeterWrapper(unittest.TestCase):
 
     def wrapper(self, login):
         env = {**os.environ, 'PATH': f'{self.bin}:{os.environ["PATH"]}', 'XDG_RUNTIME_DIR': str(self.run_dir),
-               'HYPERON_BIN': str(self.bin / 'Hyprland'),
+               'HYPERON_BIN': str(self.bin / 'Hyperon'),
                'STUB_LOG': str(self.log), 'STUB_LOGIN': '1' if login else '0'}
         r = subprocess.run(['sh', str(GREETER / 'constellation-greeter')], env=env, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -34,7 +34,7 @@ class GreeterWrapper(unittest.TestCase):
 
     def test_after_a_login_greetd_takes_over(self):
         log = self.wrapper(login=True)
-        self.assertIn('Hyprland -c /usr/share/constellation/greeter/hyperon.conf', log)
+        self.assertIn('Hyperon -c /usr/share/constellation/greeter/hyperon.conf', log)
         self.assertNotIn('tuigreet', log)
         self.assertFalse((self.run_dir / 'constellation-greeter-done').exists())   # cleaned up for next time
 

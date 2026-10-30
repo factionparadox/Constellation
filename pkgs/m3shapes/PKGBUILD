@@ -1,0 +1,29 @@
+# M3Shapes, the Material 3 Expressive shapes QML module that Caelestia's bar, dashboard and lock
+# screen import. Without it the shell fails to load. Pinned to the commit Caelestia's own
+# flake.lock uses at caelestia-shell's pinned commit: bump the two together.
+pkgname=m3shapes
+pkgver=1.0.0.r20261028
+pkgrel=1
+_commit=32ad9ce328bb77ed349b40a3be10ee9ea610b8ab
+pkgdesc='Material 3 Expressive shapes for Qt Quick (QML module M3Shapes)'
+arch=('x86_64')
+url='https://github.com/soramanew/m3shapes'
+license=('Apache-2.0')
+depends=('qt6-base' 'qt6-declarative' 'gcc-libs' 'glibc')
+makedepends=('git' 'cmake' 'ninja' 'qt6-shadertools')
+source=("m3shapes::git+$url.git#commit=$_commit")
+sha256sums=('SKIP')    # a git commit pin is itself a hash of the whole tree
+
+build() {
+  cmake -S m3shapes -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DINSTALL_QMLDIR=lib/qt6/qml \
+    -DM3SHAPES_BUILD_EXAMPLES=OFF
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  # Qt must find the module where it looks for QML modules
+  [ -f "$pkgdir/usr/lib/qt6/qml/M3Shapes/qmldir" ] || { echo 'm3shapes: qmldir not installed' >&2; return 1; }
+  install -Dm0644 m3shapes/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

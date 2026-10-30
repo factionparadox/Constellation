@@ -13,50 +13,94 @@
       "6": "38;5;215"
     },
     "padding": {
-      "right": 2
+      "right": 3
     }
   },
   "display": {
     "separator": "  ",
     "color": {
       "keys": "38;5;179",
-      "title": "38;5;39"
+      "title": "38;5;39",
+      "separator": "38;5;74"
+    },
+    "key": {
+      "width": 16
+    },
+    "size": {
+      "binaryPrefix": "iec"
+    },
+    "percent": {
+      "type": 3
     }
   },
   "modules": [
     "title",
     "separator",
-    { "type": "os", "format": "Constellation (Arch Linux {arch})" },
-    "host",
-    "bios",
-    "kernel",
-    "initsystem",
-    "uptime",
-    "packages",
-    "shell",
-    "display",
-    { "type": "command", "key": "WM", "text": "echo \"Hyperon $(pacman -Q hyperon 2>/dev/null | cut -d' ' -f2 | cut -d- -f1) (Wayland, scrolling)\"" },
-    { "type": "command", "key": "Shell UI", "text": "echo \"Caelestia $(pacman -Q caelestia-shell 2>/dev/null | cut -d' ' -f2 | cut -d. -f1-3) on Quickshell\"" },
-    "theme",
-    "icons",
-    "font",
-    "cursor",
-    "terminal",
-    "terminalfont",
-    "cpu",
-    "gpu",
-    "memory",
-    "swap",
-    "disk",
-    { "type": "command", "key": "Boot env", "text": "echo \"$(findmnt -no SOURCE /) ($(zpool list -H -o name,health 2>/dev/null | head -1 | tr '\\t' ' '))\"" },
-    "localip",
-    "wifi",
-    "bluetooth",
-    "sound",
-    "battery",
-    "poweradapter",
-    "locale",
-    "datetime",
+
+    { "type": "custom", "format": "\u001b[38;5;39m── System ─────────────────────────────" },
+    { "type": "os", "key": "OS", "format": "Constellation ({arch})" },
+    { "type": "host", "key": "Machine" },
+    { "type": "chassis", "key": "Chassis" },
+    { "type": "board", "key": "Board" },
+    { "type": "bios", "key": "Firmware" },
+    { "type": "bootmgr", "key": "Boot manager" },
+    { "type": "command", "key": "Boot env", "text": "echo \"$(findmnt -no SOURCE /) on pool $(zpool list -H -o name,health,capacity 2>/dev/null | head -1 | awk '{print $1\" (\"$2\", \"$3\" full)\"}')\"" },
+    { "type": "kernel", "key": "Kernel" },
+    { "type": "initsystem", "key": "Init" },
+    { "type": "uptime", "key": "Uptime" },
+    { "type": "loadavg", "key": "Load" },
+    { "type": "processes", "key": "Processes" },
+    { "type": "packages", "key": "Packages" },
+    { "type": "users", "key": "Users" },
+    { "type": "tpm", "key": "TPM" },
+
+    { "type": "custom", "format": "\u001b[38;5;39m── Desktop ────────────────────────────" },
+    { "type": "command", "key": "Compositor", "text": "echo \"Hyperon $(pacman -Q hyperon 2>/dev/null | awk '{print $2}' | cut -d- -f1) (Wayland, scrolling columns)\"" },
+    { "type": "command", "key": "Shell", "text": "echo \"Caelestia $(pacman -Q caelestia-shell 2>/dev/null | awk '{print $2}' | cut -d. -f1-3) on Quickshell $(pacman -Q quickshell-git 2>/dev/null | awk '{print $2}' | cut -d. -f1-3)\"" },
+    { "type": "command", "key": "Login", "text": "echo \"greetd with the Constellation login screen\"" },
+    { "type": "display", "key": "Display" },
+    { "type": "brightness", "key": "Brightness" },
+    { "type": "theme", "key": "Theme" },
+    { "type": "icons", "key": "Icons" },
+    { "type": "font", "key": "Fonts" },
+    { "type": "cursor", "key": "Cursor" },
+    { "type": "shell", "key": "Command shell" },
+    { "type": "terminal", "key": "Terminal" },
+    { "type": "terminalfont", "key": "Terminal font" },
+    { "type": "terminalsize", "key": "Terminal size" },
+    { "type": "editor", "key": "Editor" },
+    { "type": "locale", "key": "Locale" },
+    { "type": "keyboard", "key": "Keyboard" },
+    { "type": "mouse", "key": "Pointer" },
+
+    { "type": "custom", "format": "\u001b[38;5;39m── Hardware ───────────────────────────" },
+    { "type": "cpu", "key": "CPU", "temp": true },
+    { "type": "cpucache", "key": "CPU cache" },
+    { "type": "cpuusage", "key": "CPU use" },
+    { "type": "gpu", "key": "GPU", "temp": true },
+    { "type": "memory", "key": "Memory" },
+    { "type": "physicalmemory", "key": "RAM modules" },
+    { "type": "swap", "key": "Swap" },
+    { "type": "disk", "key": "Disk" },
+    { "type": "physicaldisk", "key": "Drives", "temp": true },
+    { "type": "battery", "key": "Battery", "temp": true },
+    { "type": "poweradapter", "key": "Power" },
+    { "type": "camera", "key": "Camera" },
+    { "type": "sound", "key": "Sound" },
+    { "type": "gamepad", "key": "Gamepad" },
+
+    { "type": "custom", "format": "\u001b[38;5;39m── Network ────────────────────────────" },
+    { "type": "localip", "key": "Local IP", "showIpv6": false, "showMac": false, "showSpeed": true, "showMtu": false },
+    { "type": "wifi", "key": "Wi-Fi" },
+    { "type": "dns", "key": "DNS" },
+    { "type": "netio", "key": "Traffic" },
+    { "type": "bluetoothradio", "key": "Bluetooth" },
+    { "type": "bluetooth", "key": "Paired" },
+
+    { "type": "custom", "format": "\u001b[38;5;39m── Now ────────────────────────────────" },
+    { "type": "media", "key": "Playing" },
+    { "type": "datetime", "key": "Date" },
+
     "break",
     "colors"
   ]

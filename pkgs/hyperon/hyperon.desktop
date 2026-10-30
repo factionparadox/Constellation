@@ -3,4 +3,4 @@ Name=Hyperon
 Comment=Constellation's Wayland compositor
 Exec=hyperon
 Type=Application
-DesktopNames=Hyperon;Hyprland
+DesktopNames=Hyperon

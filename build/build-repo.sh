@@ -18,8 +18,8 @@ DB=constellation
 # Built before the AUR packages, because some of those depend on them.
 FIRST=(python-materialyoucolor)
 # Constellation's own packages, in build order. Data-only ones need no chroot.
-OWN=(ani-cli zfsbootmenu-efi constellation-base ttf-material-symbols-rounded hyperon caelestia-shell constellation-desktop constellation-russian constellation-installer)
-COMPILED=(python-materialyoucolor hyperon caelestia-shell)
+OWN=(ani-cli zfsbootmenu-efi constellation-base ttf-material-symbols-rounded hyperon m3shapes caelestia-shell constellation-desktop constellation-russian constellation-installer)
+COMPILED=(python-materialyoucolor hyperon m3shapes caelestia-shell)
 
 while [ $# -gt 0 ]; do
   case "$1" in

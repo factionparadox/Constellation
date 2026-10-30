@@ -7,7 +7,7 @@
 # defaults and config paths come from hyperon-brand (see that script for every change).
 #
 # Programs that talk to Hyprland keep working: the IPC socket, hyprctl and HYPRLAND_* variables
-# are unchanged, and XDG_CURRENT_DESKTOP is "Hyperon:Hyprland".
+# are unchanged; XDG_CURRENT_DESKTOP is "Hyperon".
 pkgname=hyperon
 pkgver=0.56.2
 pkgrel=2
@@ -112,7 +112,7 @@ package() {
 
   # Hyprland's binaries under Hyperon's names.
   install -d "$lib/bin"
-  mv "$pkgdir/usr/bin/Hyprland" "$lib/bin/Hyprland"
+  mv "$pkgdir/usr/bin/Hyprland" "$lib/bin/Hyperon"
   rm -f "$pkgdir/usr/bin/hyprland"
   mv "$pkgdir/usr/bin/start-hyprland" "$pkgdir/usr/bin/hyperon"
   ln -s hyprctl "$pkgdir/usr/bin/hyperonctl"
