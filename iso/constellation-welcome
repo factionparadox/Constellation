@@ -6,7 +6,7 @@ Installing erases one whole disk and gives you:
   * an OpenZFS root with boot environments: updates go into a copy of the system
     (sudo constellation-be upgrade), so a bad update never touches the one you are using
   * ZFSBootMenu to boot any boot environment or snapshot
-  * niri and the Caelestia shell, the birthDate-free systemd, zram instead of swap
+  * MangoWM and the Caelestia shell, the birthDate-free systemd, zram instead of swap
   * the Russian kit (constellation-russian; downloads with constellation-content)
 
 Everything is on this USB stick: installing needs no internet connection.
