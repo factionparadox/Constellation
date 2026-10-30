@@ -50,7 +50,7 @@ Uploads `out/repo` as the assets of the `repo` release on GitHub, which is where
 
 `build/check-updates.sh` (run daily by GitHub Actions) reports AUR packages with new commits to review and fails when Arch's systemd is ahead of Constellation's. Updating a package is: `build/aur-pin.sh NAME`, `build/build-repo.sh --only NAME`, `build/publish-repo.sh`, then `sudo constellation-be upgrade` on the laptop.
 
-Constellation's own packages: bump `pkgver` or `pkgrel` in `pkgs/NAME/PKGBUILD` when you change them, so installed systems see the update. The Caelestia shell (`pkgs/caelestia-mango`) is pinned to an upstream commit; it needs Quickshell's git version, pinned alongside it in `pkgs/aur.lock` (`src=`), so move both together.
+Constellation's own packages: bump `pkgver` or `pkgrel` in `pkgs/NAME/PKGBUILD` when you change them, so installed systems see the update. The Caelestia shell (`pkgs/caelestia-shell`) is pinned to an upstream commit; it needs Quickshell's git version, pinned alongside it in `pkgs/aur.lock` (`src=`), so move both together. Hyperon (`pkgs/hyperon`) is frozen at Hyprland 0.56.2 on purpose: its sources are the 0.56.2 tag and the library commits from that tag's `flake.lock`, and `hyperon-brand` stops the build if any edit it makes no longer matches.
 
 ## Tests
 

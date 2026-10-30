@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Hyperon's changes to the Hyprland 0.56.2 stack, applied in prepare(). Every edit must match
+# exactly once (or the stated number of times), so an unexpected upstream source stops the
+# build instead of shipping a half-branded compositor.
+#   hyperon-brand SRCDIR
+set -euo pipefail
+src=$1
+fail() { echo "hyperon-brand: $*" >&2; exit 1; }
+
+# edit FILE COUNT OLD NEW: replace a literal string that occurs exactly COUNT times.
+edit() {
+  local file=$src/$1 count=$2 old=$3 new=$4
+  [ -f "$file" ] || fail "missing $1"
+  python3 - "$file" "$count" "$old" "$new" <<'PY' || fail "$1: expected $2 match(es) of: $3"
+import sys
+path, count, old, new = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
+text = open(path, encoding="utf-8").read()
+if text.count(old) != count:
+    sys.exit(1)
+open(path, "w", encoding="utf-8").write(text.replace(old, new))
+PY
+}
+
+# --- hyprutils: per-user and system configuration lives in hyperon/, not hypr/
+edit hyprutils/src/path/Path.cpp 2 '"/hypr/"' '"/hyperon/"'
+
+# --- the compositor's name, wherever a person sees it
+H=Hyprland/src
+edit $H/helpers/SystemInfo.cpp 1 '"Hyprland {} built from branch' '"Hyperon {} (Constellation'"'"'s respin of Hyprland) built from branch'
+edit $H/main.cpp 1 '"Welcome to Hyprland!"' '"Welcome to Hyperon!"'
+edit $H/main.cpp 1 '"usage: Hyprland [arg [...]].\n"' '"usage: hyperon [arg [...]].\n"'
+edit $H/errorOverlay/Overlay.cpp 1 '"\nHyprland may not work correctly."' '"\nHyperon may not work correctly."'
+edit $H/debug/crash/CrashReporter.cpp 1 '"Hyprland has crashed :( Consult the crash report at "' '"Hyperon has crashed. The crash report is at "'
+edit $H/debug/crash/CrashReporter.cpp 1 '   Hyprland Crash Report\n' '   Hyperon Crash Report\n'
+edit $H/xwayland/XWM.cpp 1 '"Hyprland :D"' '"Hyperon"'
+edit $H/protocols/core/Seat.hpp 1 'HL_SEAT_NAME = "Hyprland"' 'HL_SEAT_NAME = "Hyperon"'
+# Programs that look for Hyprland still find it after Hyperon's own name.
+edit $H/Compositor.cpp 1 'setenv("XDG_CURRENT_DESKTOP", "Hyprland", 1)' 'setenv("XDG_CURRENT_DESKTOP", "Hyperon:Hyprland", 1)'
+
+# --- quiet by default: no Hyprland logo or anime wallpaper, no splash, no popups
+V=$H/config/values/ConfigValues.cpp
+edit $V 1 '"disables the random Hyprland logo / anime girl background. :(", false)' '"disables the default background logo.", true)'
+edit $V 1 '"disables the Hyprland splash rendering.", false)' '"disables the splash text.", true)'
+edit $V 1 '"disable the popup that shows up when you update hyprland to a new version.", false)' '"disable the popup after an update.", true)'
+edit $V 1 '"disable the popup that shows up twice a year encouraging to donate.", false)' '"disable the donation popup.", true)'
+
+# --- configuration: hyperon.conf (the classic format) first, Lua only if that is all there is;
+# with no config at all, write a classic default rather than a Lua one.
+J=$H/config/supplementary/jeremy/Jeremy.cpp
+edit $J 1 'findConfig(ISDEBUG ? "hyprlandd" : "hyprland", "lua")' 'findConfig("hyperon", "lua")'
+edit $J 1 'findConfig(ISDEBUG ? "hyprlandd" : "hyprland", "conf")' 'findConfig("hyperon", "conf")'
+edit $J 1 '        if (LUA_PATHS.first.has_value())
+            return SConfigStateReply{.path = LUA_PATHS.first.value(), .type = CONFIG_TYPE_REGULAR};
+        else if (CONF_PATHS.first.has_value())
+            return SConfigStateReply{.path = CONF_PATHS.first.value(), .type = CONFIG_TYPE_REGULAR};
+        else if (LUA_PATHS.second.has_value()) {
+            auto CONFIGPATH = Hyprutils::Path::fullConfigPath(LUA_PATHS.second.value(), ISDEBUG ? "hyprlandd" : "hyprland", "lua");' '        if (CONF_PATHS.first.has_value())
+            return SConfigStateReply{.path = CONF_PATHS.first.value(), .type = CONFIG_TYPE_REGULAR};
+        else if (LUA_PATHS.first.has_value())
+            return SConfigStateReply{.path = LUA_PATHS.first.value(), .type = CONFIG_TYPE_REGULAR};
+        else if (CONF_PATHS.second.has_value()) {
+            auto CONFIGPATH = Hyprutils::Path::fullConfigPath(CONF_PATHS.second.value(), "hyperon", "conf");'
+
+# --- the launcher (start-hyprland, installed as hyperon) starts Hyperon's own compositor
+S=Hyprland/start/src
+edit $S/core/Instance.cpp 3 'value_or("Hyprland")' 'value_or("/usr/lib/hyperon/bin/Hyprland")'
+edit $S/helpers/Nix.cpp 1 'CProcess proc("Hyprland", {"--version-json"})' 'CProcess proc("/usr/lib/hyperon/bin/Hyprland", {"--version-json"})'
+edit $S/main.cpp 1 'start-hyprland - A binary to properly start Hyprland via a watchdog process.' 'hyperon - starts the Hyperon compositor under a watchdog that restarts it after a crash.'
+
+echo "hyperon-brand: all edits applied"

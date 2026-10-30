@@ -1,0 +1,41 @@
+# Caelestia, the Quickshell desktop shell, unmodified, for Hyperon (Constellation's respin of
+# Hyprland, which Caelestia is written for). Upstream at a reviewed commit: bump _commit and
+# pkgver together. Caelestia needs Quickshell's git version (pinned in pkgs/aur.lock).
+pkgname=caelestia-shell
+pkgver=2.5.0.r20261029
+pkgrel=2
+_commit=b51fdb35ca7a14ac5a49e0d94fc5de2d79756aed
+_upstream=2.5.0
+pkgdesc='Caelestia, a Quickshell desktop shell, on the Hyperon compositor'
+arch=('x86_64')
+url='https://github.com/caelestia-dots/shell'
+license=('GPL-3.0-only')
+depends=(
+  'quickshell-git' 'hyperon' 'qt6-base' 'qt6-declarative' 'qt6-shadertools' 'qt6-svg' 'qt6-wayland'
+  'qt6-multimedia'
+  'caelestia-cli' 'libqalculate' 'libpipewire' 'aubio' 'libcava' 'fftw'
+  'pipewire' 'wireplumber' 'networkmanager' 'lm_sensors' 'brightnessctl' 'ddcutil'
+  'wl-clipboard' 'cliphist' 'app2unit' 'swappy' 'grim' 'slurp'
+  'fish' 'bash' 'python' 'jq' 'libnotify' 'libxml2'
+  'ttf-rubik-vf' 'ttf-material-symbols-rounded' 'ttf-cascadia-code-nerd'
+)
+makedepends=('git' 'cmake' 'ninja' 'pkgconf')
+optdepends=('gpu-screen-recorder: screen recording from the shell'
+            'matugen: colour schemes from the wallpaper')
+conflicts=('caelestia-mango' 'niri-caelestia-shell')
+replaces=('caelestia-mango' 'niri-caelestia-shell')
+source=("shell::git+https://github.com/caelestia-dots/shell.git#commit=$_commit")
+sha256sums=('SKIP')    # a git commit pin is itself a hash of the whole tree
+
+build() {
+  cmake -S shell -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc \
+    -DVERSION="$_upstream" -DGIT_REVISION="$_commit" -DDISTRIBUTOR=Constellation \
+    -DINSTALL_QSCONFDIR=/etc/xdg/quickshell/caelestia
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm0644 shell/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

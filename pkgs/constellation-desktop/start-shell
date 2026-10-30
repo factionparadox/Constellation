@@ -1,5 +1,5 @@
 #!/bin/sh
-# Start the Caelestia shell under MangoWM, restarting it if it crashes (but not in a loop).
+# Start the Caelestia shell under Hyperon, restarting it if it crashes (but not in a loop).
 export QS_DISABLE_CRASH_HANDLER=1
 log="${XDG_STATE_HOME:-$HOME/.local/state}/constellation/shell.log"
 mkdir -p "$(dirname "$log")"

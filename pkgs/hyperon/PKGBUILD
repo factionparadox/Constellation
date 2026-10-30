@@ -1,0 +1,141 @@
+# Hyperon: Constellation's Wayland compositor, a respin of Hyprland 0.56.2 (BSD-3-Clause).
+#
+# Frozen at 0.56.2, the last release that reads the classic hyprland.conf format (0.57 dropped
+# it). Hyprland needs exact versions of its own libraries, which Arch keeps moving on, so the
+# whole stack is built here at the revisions 0.56.2 was released with (its flake.lock) and
+# installed privately in /usr/lib/hyperon, out of reach of Arch's updates. Hyperon's own name,
+# defaults and config paths come from hyperon-brand (see that script for every change).
+#
+# Programs that talk to Hyprland keep working: the IPC socket, hyprctl and HYPRLAND_* variables
+# are unchanged, and XDG_CURRENT_DESKTOP is "Hyperon:Hyprland".
+pkgname=hyperon
+pkgver=0.56.2
+pkgrel=1
+pkgdesc="Constellation's Wayland compositor (a respin of Hyprland 0.56.2)"
+arch=('x86_64')
+url='https://github.com/factionparadox/Constellation'
+license=('BSD-3-Clause')
+depends=(
+  'cairo' 'pango' 'pixman' 'libdrm' 'mesa' 'libinput' 'libxkbcommon' 'wayland' 'libxcursor'
+  'libdisplay-info' 'seatd' 'systemd-libs' 'libzip' 'librsvg' 'tomlplusplus' 'libjpeg-turbo'
+  'libwebp' 'file' 'libpng' 'libjxl' 're2' 'muparser' 'lcms2' 'libei' 'glib2'
+  'util-linux-libs' 'lua' 'libffi' 'libxcb' 'xcb-util-wm' 'xcb-util-errors' 'xorg-xwayland'
+  'readline' 'sdbus-cpp' 'pipewire' 'qt6-base' 'qt6-wayland' 'slurp' 'gcc-libs' 'glibc'
+)
+makedepends=('git' 'cmake' 'ninja' 'meson' 'pkgconf' 'wayland-protocols' 'hwdata' 'glslang'
+             'python' 'pugixml' 'xorgproto')
+provides=("hyprland=$pkgver" 'xdg-desktop-portal-hyprland' 'xdg-desktop-portal-impl')
+conflicts=('hyprland' 'hyprland-git' 'xdg-desktop-portal-hyprland')
+options=('!lto')
+
+# Every source is a git commit (a hash of its whole tree): Hyprland's v0.56.2 tag and the
+# library revisions from Hyprland's flake.lock at that tag.
+_hw=https://github.com/hyprwm
+source=("Hyprland::git+$_hw/Hyprland.git#commit=efb50993780079460b0cbed1363e2166a2de1d9f"
+        "hyprutils::git+$_hw/hyprutils.git#commit=5a7b8cf221914ce4714407950e4ffbdddcd8b66f"
+        "hyprlang::git+$_hw/hyprlang.git#commit=090117506ddc3d7f26e650ff344d378c2ec329cc"
+        "hyprcursor::git+$_hw/hyprcursor.git#commit=39435900785d0c560c6ae8777d29f28617d031ef"
+        "hyprgraphics::git+$_hw/hyprgraphics.git#commit=8699c38f0e4a1ca3bfc84f84ba020509ced1f133"
+        "aquamarine::git+$_hw/aquamarine.git#commit=1a10fe26a9f7d989c359e6a9ea61aa2e44d06c36"
+        "hyprwayland-scanner::git+$_hw/hyprwayland-scanner.git#commit=b8632713a6beaf28b56f2a7b0ab2fb7088dbb404"
+        "hyprwire::git+$_hw/hyprwire.git#commit=7d935bb54674aa0fbd327d2a6888bd0630079ed0"
+        "xdph::git+$_hw/xdg-desktop-portal-hyprland.git#commit=b653ab53a435e92cc00f34771e6823bc59f2f740"
+        # Hyprland's submodules at v0.56.2, and the glaze it would otherwise download at build time
+        "hyprland-protocols::git+$_hw/hyprland-protocols.git#commit=bd153e76f751f150a09328dbdeb5e4fab9d23622"
+        "udis86::git+https://github.com/canihavesomecoffee/udis86.git#commit=5336633af70f3917760a6d441ff02d93477b0c86"
+        "glaze::git+https://github.com/stephenberry/glaze.git#commit=b518eec7a22e56ffa238b072c07f47efa7cea97f"
+        'hyperon-brand' 'hyperon.desktop')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
+            'SKIP' 'SKIP')
+
+_prefix=/usr/lib/hyperon
+
+prepare() {
+  # Hyprland's and the portal's submodules come from the pinned sources above.
+  for p in Hyprland xdph; do
+    rm -rf "$p/subprojects/hyprland-protocols"
+    ln -s "$srcdir/hyprland-protocols" "$p/subprojects/hyprland-protocols"
+  done
+  rm -rf Hyprland/subprojects/udis86
+  ln -s "$srcdir/udis86" Hyprland/subprojects/udis86
+  bash "$srcdir/hyperon-brand" "$srcdir"
+}
+
+# Build one CMake project; the private libraries are staged in $srcdir/stage until package().
+_cmake() {   # _cmake DIR PREFIX [cmake args...]
+  local dir=$1 prefix=$2; shift 2
+  cmake -S "$dir" -B "build-$dir" -G Ninja -Wno-dev \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="$prefix" -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_INSTALL_LIBEXECDIR=lib \
+    -DCMAKE_INSTALL_RPATH="$_prefix/lib" \
+    -DCMAKE_PREFIX_PATH="$_stage$_prefix" \
+    -DBUILD_TESTING=OFF \
+    "$@"
+  cmake --build "build-$dir"
+  DESTDIR="$_stage" cmake --install "build-$dir"
+  # Point the staged pkg-config and CMake files at the stage, so the next project builds
+  # against these libraries rather than Arch's.
+  find "$_stage$_prefix" \( -name '*.pc' -o -name '*.cmake' \) -type f \
+    -exec sed -i "s|=$_prefix|=$_stage$_prefix|g; s|-I$_prefix|-I$_stage$_prefix|g; s|-L$_prefix|-L$_stage$_prefix|g" {} +
+}
+
+build() {
+  _stage="$srcdir/stage"
+  rm -rf "$_stage"
+  export PKG_CONFIG_PATH="$_stage$_prefix/lib/pkgconfig:$_stage$_prefix/share/pkgconfig"
+  export PATH="$_stage$_prefix/bin:$PATH"
+  export LDFLAGS="$LDFLAGS -Wl,-rpath-link,$_stage$_prefix/lib"
+
+  # The libraries, each against the ones before it.
+  _cmake hyprwayland-scanner "$_prefix"
+  _cmake hyprutils "$_prefix"
+  _cmake hyprlang "$_prefix"
+  _cmake hyprcursor "$_prefix"
+  _cmake hyprgraphics "$_prefix"
+  _cmake aquamarine "$_prefix"
+  _cmake hyprwire "$_prefix"
+
+  # The compositor, its launcher and hyprctl, then the screen-sharing portal.
+  _cmake Hyprland /usr \
+    -DNO_HYPRPM=ON -DNO_UWSM=ON -DUSE_TRACY=OFF \
+    -DFETCHCONTENT_FULLY_DISCONNECTED=ON -DFETCHCONTENT_SOURCE_DIR_GLAZE="$srcdir/glaze"
+  _cmake xdph /usr
+}
+
+package() {
+  _stage="$srcdir/stage"
+  cp -a "$_stage/." "$pkgdir/"
+  local lib="$pkgdir$_prefix"
+  # Build-time files of the private libraries (headers, pkg-config, CMake) are not shipped,
+  # nor the scanner, which only generates code.
+  rm -rf "$lib/include" "$lib/lib/pkgconfig" "$lib/share/pkgconfig" "$lib/lib/cmake" "$lib/bin"
+
+  # Hyprland's binaries under Hyperon's names.
+  install -d "$lib/bin"
+  mv "$pkgdir/usr/bin/Hyprland" "$lib/bin/Hyprland"
+  rm -f "$pkgdir/usr/bin/hyprland"
+  mv "$pkgdir/usr/bin/start-hyprland" "$pkgdir/usr/bin/hyperon"
+  ln -s hyprctl "$pkgdir/usr/bin/hyperonctl"
+
+  # Hyprland's own session entries, Lua example and editor stubs, headers and logo wallpapers
+  # are not part of Hyperon.
+  rm -rf "$pkgdir/usr/share/wayland-sessions" "$pkgdir/usr/include" "$pkgdir/usr/share/pkgconfig"
+  rm -f "$pkgdir/usr/share/hypr/hyprland.lua" "$pkgdir/usr/share/hypr/"wall*.png
+  rm -rf "$pkgdir/usr/share/hypr/stubs"
+  install -Dm0644 "$srcdir/hyperon.desktop" "$pkgdir/usr/share/wayland-sessions/hyperon.desktop"
+  # Portals are chosen by desktop name; Hyperon's name gets Hyprland's choice.
+  cp "$pkgdir/usr/share/xdg-desktop-portal/hyprland-portals.conf" \
+     "$pkgdir/usr/share/xdg-desktop-portal/hyperon-portals.conf"
+
+  # Hyperon must not load a stray system copy of these libraries.
+  if find "$pkgdir/usr/lib" -maxdepth 1 \( -name 'libhypr*' -o -name 'libaquamarine*' \) | grep -q .; then
+    echo 'hyperon: a private library escaped /usr/lib/hyperon' >&2; return 1
+  fi
+
+  # Every component's licence (all BSD-3-Clause, glaze MIT).
+  local d
+  for d in Hyprland hyprutils hyprlang hyprcursor hyprgraphics aquamarine hyprwire xdph \
+           hyprland-protocols udis86 glaze; do
+    [ -f "$srcdir/$d/LICENSE" ] && install -Dm0644 "$srcdir/$d/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/$d.LICENSE"
+  done
+}

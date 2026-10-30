@@ -67,11 +67,12 @@ class PackageTests(unittest.TestCase):
         own = {p.parent.name for p in PKGS.glob('*/PKGBUILD')}
         base = (PKGS / 'constellation-base/PKGBUILD').read_text()
         self.assertIn("'systemd-remove-birthdate'", base)
-        shell = (PKGS / 'caelestia-mango/PKGBUILD').read_text()
+        shell = (PKGS / 'caelestia-shell/PKGBUILD').read_text()
         for dep in ('quickshell-git', 'caelestia-cli', 'libcava', 'app2unit'):
             self.assertIn(f"'{dep}'", shell)
             self.assertIn(dep, aur, dep)
-        self.assertTrue(own >= {'zfsbootmenu-efi', 'caelestia-mango', 'ttf-material-symbols-rounded'})
+        self.assertTrue(own >= {'zfsbootmenu-efi', 'caelestia-shell', 'hyperon', 'ttf-material-symbols-rounded'})
+        self.assertIn("'hyperon'", shell)
         self.assertIn("'ttf-material-symbols-rounded'", shell)
 
     def test_reviewed_pins_are_full_commits(self):

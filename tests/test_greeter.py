@@ -18,7 +18,7 @@ class GreeterWrapper(unittest.TestCase):
         self.bin = base / 'bin'; self.bin.mkdir()
         self.run_dir = base / 'run'; self.run_dir.mkdir()
         self.log = base / 'log'
-        (self.bin / 'mango').write_text('#!/bin/sh\necho "mango $*" >> "$STUB_LOG"\n'
+        (self.bin / 'Hyprland').write_text('#!/bin/sh\necho "Hyprland $*" >> "$STUB_LOG"\n'
                                        '[ "$STUB_LOGIN" = 1 ] && touch "$XDG_RUNTIME_DIR/constellation-greeter-done"\nexit 0\n')
         (self.bin / 'tuigreet').write_text('#!/bin/sh\necho "tuigreet $*" >> "$STUB_LOG"\n')
         for f in self.bin.iterdir():
@@ -26,6 +26,7 @@ class GreeterWrapper(unittest.TestCase):
 
     def wrapper(self, login):
         env = {**os.environ, 'PATH': f'{self.bin}:{os.environ["PATH"]}', 'XDG_RUNTIME_DIR': str(self.run_dir),
+               'HYPERON_BIN': str(self.bin / 'Hyprland'),
                'STUB_LOG': str(self.log), 'STUB_LOGIN': '1' if login else '0'}
         r = subprocess.run(['sh', str(GREETER / 'constellation-greeter')], env=env, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -33,14 +34,14 @@ class GreeterWrapper(unittest.TestCase):
 
     def test_after_a_login_greetd_takes_over(self):
         log = self.wrapper(login=True)
-        self.assertIn('mango -c /usr/share/constellation/greeter/mango.conf', log)
+        self.assertIn('Hyprland -c /usr/share/constellation/greeter/hyperon.conf', log)
         self.assertNotIn('tuigreet', log)
         self.assertFalse((self.run_dir / 'constellation-greeter-done').exists())   # cleaned up for next time
 
     def test_without_a_login_the_text_screen_takes_over(self):
         log = self.wrapper(login=False)
         self.assertIn('tuigreet --time --remember --asterisks', log)
-        self.assertIn('--cmd mango', log)
+        self.assertIn('--cmd hyperon', log)
 
 
 class Branding(unittest.TestCase):
@@ -58,17 +59,28 @@ class Branding(unittest.TestCase):
 
 
 class GreeterFiles(unittest.TestCase):
-    def test_mango_runs_the_greeter_and_quits_with_it(self):
-        conf = (GREETER / 'greeter-mango.conf').read_text()
-        self.assertIn('exec_once=qs -p /usr/share/constellation/greeter/shell.qml; mmsg dispatch quit', conf)
-        self.assertNotRegex(conf, r'(?m)^bind')                # nothing to escape to
+    def test_hyperon_runs_the_greeter_and_quits_with_it(self):
+        conf = (GREETER / 'greeter-hyperon.conf').read_text()
+        self.assertIn("exec-once = sh -c 'qs -p /usr/share/constellation/greeter/shell.qml; hyprctl dispatch exit'", conf)
+        self.assertNotRegex(conf, r'(?m)^\s*bind')            # nothing to escape to
+
+    def test_desktop_config_keeps_the_keybind_table(self):
+        conf = (GREETER / 'hyperon.conf').read_text()
+        self.assertIn('layout = scrolling', conf)
+        for bind in ('SUPER, space, exec, qs -c caelestia ipc call drawers toggle launcher',
+                     'SUPER, T, exec, kitty', 'SUPER, W, exec, firefox', 'SUPER, Q, killactive,',
+                     'SUPER SHIFT, 1, movetoworkspacesilent, 1', 'SUPER, 9, workspace, 9'):
+            self.assertIn(bind, conf)
+        self.assertNotIn('mango', conf.lower())
+        # every section closes
+        self.assertEqual(conf.count('{'), conf.count('}'))
 
     def test_greetd_runs_the_wrapper(self):
         toml = (ROOT / 'pkgs/constellation-desktop/greetd.toml').read_text()
         self.assertIn('command = "/usr/lib/constellation/greeter"', toml)
 
     def test_qml_braces_balance_and_marker_matches(self):
-        for path in (GREETER / 'shell.qml', GREETER / 'Greeter.qml', GREETER / 'Sky.qml', ROOT / 'pkgs/caelestia-mango/Hypr.qml', ROOT / 'pkgs/caelestia-mango/CustomShortcut.qml'):
+        for path in (GREETER / 'shell.qml', GREETER / 'Greeter.qml', GREETER / 'Sky.qml', ):
             name = path.name; text = path.read_text()
             code = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|//[^\n]*', '', text)
             for a, b in ('{}', '()', '[]'):
