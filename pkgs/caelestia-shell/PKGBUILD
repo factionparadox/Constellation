@@ -18,6 +18,9 @@ depends=(
   'pipewire' 'wireplumber' 'networkmanager' 'lm_sensors' 'brightnessctl' 'ddcutil'
   'wl-clipboard' 'cliphist' 'app2unit' 'swappy' 'grim' 'slurp'
   'fish' 'bash' 'python' 'jq' 'libnotify' 'libxml2'
+  # what the shell and caelestia-cli run: killall, dconf (GTK theme), sass (themes), fuzzel
+  # (clipboard and emoji pickers), which, pkexec, pidof
+  'psmisc' 'dconf' 'dart-sass' 'fuzzel' 'which' 'polkit' 'procps-ng'
   'ttf-rubik-vf' 'ttf-material-symbols-rounded' 'ttf-cascadia-code-nerd'
 )
 makedepends=('git' 'cmake' 'ninja' 'pkgconf')
