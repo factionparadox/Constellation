@@ -102,12 +102,12 @@ grep -rlE 'archisobasedir=' "$PROFILE"/{grub,syslinux,efiboot} 2>/dev/null |
 grep -rqE 'archisobasedir=[^ ]* copytoram=n' "$PROFILE/grub" || die 'could not add copytoram=n to the boot menu; archiso has changed'
 
 # --- Constellation's repository, before Arch's (it is the only source of the systemd family)
-add_repo() {   # add_repo PACMAN.CONF SERVER
-  python3 - "$1" "$2" "$SIGLEVEL" <<'PY'
+add_repo() {   # add_repo PACMAN.CONF SERVER [SERVER...]  (pacman tries them in order)
+  python3 - "$SIGLEVEL" "$@" <<'PY'
 import sys
-path, server, sig = sys.argv[1:]
+sig, path, *servers = sys.argv[1:]
 s = open(path).read()
-block = f'[constellation]\nSigLevel = {sig}\nServer = {server}\n\n'
+block = f'[constellation]\nSigLevel = {sig}\n' + ''.join(f'Server = {x}\n' for x in servers) + '\n'
 i = s.index('[core]')
 open(path, 'w').write(s[:i] + block + s[i:])
 PY
@@ -139,7 +139,26 @@ LocalFileSigLevel = Optional
 SigLevel = $SIGLEVEL
 Server = file://$BOOTMNT/constellation-offline
 EOF
-cp "$RELENG/pacman.conf" "$SHARE/pacman.conf"; add_repo "$SHARE/pacman.conf" "$REMOTE"
+# Constellation's repository online first; if it cannot be reached or is not published yet,
+# the copy the installer puts on the disk (/var/lib/constellation/repo), so updating never fails.
+cp "$RELENG/pacman.conf" "$SHARE/pacman.conf"
+add_repo "$SHARE/pacman.conf" "$REMOTE" "file:///var/lib/constellation/repo"
+
+# --- that copy: Constellation's repository as built (database and current packages only)
+say "Copying Constellation's repository for the installed system"
+rm -rf "$OUT/localrepo"; install -d "$OUT/localrepo"
+cp -L "$PKGREPO/constellation.db.tar.gz" "$OUT/localrepo/constellation.db"
+cp -L "$PKGREPO/constellation.files.tar.gz" "$OUT/localrepo/constellation.files"
+for f in constellation.db constellation.files; do
+  [ ! -f "$PKGREPO/$f.tar.gz.sig" ] || cp -L "$PKGREPO/$f.tar.gz.sig" "$OUT/localrepo/$f.sig"
+done
+tar -xOzf "$PKGREPO/constellation.db.tar.gz" --wildcards '*/desc' |
+  awk '/^%FILENAME%$/ {getline; print}' | while read -r pkg; do
+    [ -f "$PKGREPO/$pkg" ] || die "the repository lists $pkg but it is not in $PKGREPO"
+    cp "$PKGREPO/$pkg" "$OUT/localrepo/"
+    [ ! -f "$PKGREPO/$pkg.sig" ] || cp "$PKGREPO/$pkg.sig" "$OUT/localrepo/"
+  done
+echo "    $(ls "$OUT/localrepo"/*.pkg.tar.zst | wc -l) packages, $(du -sh "$OUT/localrepo" | cut -f1)"
 
 # --- the Russian content packs, from the content mirror (each part checked by its SHA-256)
 for pack in $CONTENT; do
@@ -212,7 +231,7 @@ rm -rf "$WORK/archiso"
 iso=$(ls -t "$OUT"/constellation-*.iso | sed -n 1p)   # sed reads to the end (head would break pipefail)
 
 say 'Adding the packages and content packs to the ISO'
-maps=(-map "$OUT/offline" /constellation-offline)
+maps=(-map "$OUT/offline" /constellation-offline -map "$OUT/localrepo" /constellation-repo)
 for pack in $CONTENT; do maps+=(-map "$OUT/content/$pack" "/constellation-content/$pack"); done
 if [ -n "$MUSIC" ] && [ -d "$MUSIC" ] && [ -n "$(ls -A "$MUSIC")" ]; then
   say "Adding your music from $MUSIC ($(du -sh "$MUSIC" | cut -f1)): a PERSONAL ISO, not for sharing"
@@ -228,3 +247,11 @@ if [ -n "$personal" ]; then mv -f "$iso" "$personal"; iso=$personal; fi
 (cd "$OUT" && sha256sum "$(basename "$iso")" > "$(basename "$iso").sha256")
 [ -z "${SUDO_UID:-}" ] || chown "$SUDO_UID:${SUDO_GID:-$SUDO_UID}" "$iso" "$iso.sha256"
 say "Built $iso ($(du -h "$iso" | cut -f1))"
+# Installed systems update from the online repository when it is published, and from the copy
+# on their own disk until then: say which it will be.
+if curl -fsIL --max-time 20 "$REMOTE/constellation.db" >/dev/null 2>&1; then
+  echo "Online repository: published ($REMOTE)."
+else
+  echo "Online repository: NOT published yet. Installed systems update from the copy on their disk"
+  echo "until you run build/publish-repo.sh."
+fi

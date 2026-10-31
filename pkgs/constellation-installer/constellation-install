@@ -25,6 +25,7 @@ BOOTMNT=/run/archiso/bootmnt     # the USB stick itself
 OFFLINE=${CONSTELLATION_INSTALL_OFFLINE:-$BOOTMNT/constellation-offline}
 CONTENT=${CONSTELLATION_INSTALL_CONTENT:-$BOOTMNT/constellation-content}
 MUSIC=${CONSTELLATION_INSTALL_MUSIC:-$BOOTMNT/constellation-music}     # personal ISOs only
+LOCALREPO=${CONSTELLATION_INSTALL_LOCALREPO:-$BOOTMNT/constellation-repo}   # [constellation], kept on the disk
 KEYFILE=/etc/zfs/$POOL.key
 
 die() { printf '\nconstellation-install: %s\n' "$*" >&2; exit 1; }
@@ -237,6 +238,12 @@ run pacstrap -C "$SHARE/pacman-live.conf" "$MNT" "${pkgs[@]}"
 
 say 'Configuring the installed system'
 run cp "$SHARE/pacman.conf" "$MNT/etc/pacman.conf"     # Arch's mirrors and Constellation's repository
+# Constellation's repository as this USB stick carries it: pacman's second server for
+# [constellation], so updates work before (or without) the online repository.
+if [ -f "$LOCALREPO/constellation.db" ]; then
+  run install -d "$MNT/var/lib/constellation/repo"
+  run cp -a "$LOCALREPO/." "$MNT/var/lib/constellation/repo/"
+fi
 run install -d -m 0755 "$MNT/etc/zfs"
 run cp /etc/hostid "$MNT/etc/hostid"
 run zpool set cachefile=/etc/zfs/zpool.cache "$POOL"
