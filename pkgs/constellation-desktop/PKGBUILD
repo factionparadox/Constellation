@@ -1,7 +1,7 @@
 # Constellation desktop: the Hyperon compositor with the Caelestia shell, and the apps and services around it.
 pkgname=constellation-desktop
 pkgver=0.3.0
-pkgrel=2
+pkgrel=3
 pkgdesc='Constellation desktop: Hyperon, the Caelestia shell, greetd and the everyday apps'
 arch=('any')
 url='https://github.com/factionparadox/Constellation'
@@ -17,7 +17,7 @@ depends=(
   'mesa' 'vulkan-intel' 'intel-media-driver' 'sof-firmware' 'brightnessctl'
   # apps
   'kitty' 'fish' 'dolphin' 'firefox' 'discord' 'vlc' 'vlc-plugins-all' 'ani-cli' 'proton-vpn-gtk-app'
-  'grim' 'slurp' 'swappy' 'mpv' 'fastfetch' 'btop'
+  'grim' 'slurp' 'swappy' 'mpv' 'fastfetch' 'btop' 'jq'
   # fonts (Inter and Material Symbols for the login screen, as on the boot menu)
   'inter-font' 'ttf-material-symbols-rounded' 'quickshell-git'
   'noto-fonts' 'noto-fonts-cjk' 'noto-fonts-emoji' 'ttf-jetbrains-mono-nerd'
@@ -36,7 +36,8 @@ package() {
   install -Dm0755 start-shell "$pkgdir/usr/lib/constellation/start-shell"
   install -Dm0644 greetd.toml "$pkgdir/etc/greetd/constellation.toml"
   install -Dm0644 greetd-constellation.conf "$pkgdir/usr/lib/systemd/system/greetd.service.d/constellation.conf"
-  install -Dm0644 shell.json "$pkgdir/etc/skel/.config/caelestia/shell.json"
+  # the shell's defaults; start-shell copies them into each account's ~/.config/caelestia
+  install -Dm0644 shell.json "$pkgdir/usr/share/constellation/caelestia/shell.json"
   # the graphical login screen
   for f in shell.qml Greeter.qml Sky.qml; do
     install -Dm0644 "$f" "$pkgdir/usr/share/constellation/greeter/$f"

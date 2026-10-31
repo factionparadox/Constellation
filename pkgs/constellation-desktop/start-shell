@@ -3,6 +3,26 @@
 export QS_DISABLE_CRASH_HANDLER=1
 log="${XDG_STATE_HOME:-$HOME/.local/state}/constellation/shell.log"
 mkdir -p "$(dirname "$log")"
+
+# Caelestia reads only ~/.config/caelestia/shell.json. Fill in Constellation's defaults for
+# anything it does not set (your own settings win), and make the weather Celsius unless you chose
+# a unit: Qt counts the UK as imperial, so Caelestia's "Auto" would mean Fahrenheit.
+cfg="${XDG_CONFIG_HOME:-$HOME/.config}/caelestia/shell.json"
+defaults=/usr/share/constellation/caelestia/shell.json
+if [ -f "$defaults" ]; then
+  mkdir -p "$(dirname "$cfg")"
+  if [ ! -s "$cfg" ]; then
+    cp "$defaults" "$cfg"
+  elif tmp=$(mktemp "$cfg.XXXXXX"); then
+    if jq -s '.[0] * .[1] | .services.weatherUnits |= (if . == null or . == "Auto" then "Celsius" else . end)' \
+         "$defaults" "$cfg" > "$tmp" 2>>"$log"; then
+      cmp -s "$tmp" "$cfg" && rm -f "$tmp" || mv "$tmp" "$cfg"
+    else
+      rm -f "$tmp"     # not valid JSON: leave the file as it is
+    fi
+  fi
+fi
+
 n=0
 while [ "$n" -lt 5 ]; do
   qs -c caelestia -n >>"$log" 2>&1 && exit 0

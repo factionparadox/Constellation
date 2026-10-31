@@ -9,5 +9,9 @@
   },
   "paths": {
     "wallpaperDir": "/usr/share/backgrounds/constellation"
+  },
+  "services": {
+    "weatherUnits": "Celsius",
+    "clockFormat": "TwentyFourHour"
   }
 }
