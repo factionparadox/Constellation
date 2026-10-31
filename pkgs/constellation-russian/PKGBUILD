@@ -2,7 +2,7 @@
 # engine and the downloader for the tutor, voices, courses, audiobooks and dictionaries.
 pkgname=constellation-russian
 pkgver=0.1.0
-pkgrel=1
+pkgrel=2
 _piper=2023.11.14-2
 pkgdesc='Constellation Russian kit: AI tutor, word drill, speech, courses and offline reading'
 arch=('x86_64')
@@ -13,10 +13,10 @@ install=constellation-russian.install
 source=('constellation-russian' 'constellation-content'
         'fetch-files.py' 'fetch-kiwix.py' 'fetch-archive.py' 'fetch-mezhdunami.py' 'fetch-mirror.py'
         'vocab.tsv' 'library.tsv' 'audiobooks.tsv' 'voices.tsv' 'VOCAB-SOURCES.md' 'mirror.json'
-        'constellation-russian-words.desktop' 'constellation-russian-tutor.desktop'
+        'constellation-russian-words.desktop' 'constellation-russian-tutor.desktop' 'ollama-constellation.conf'
         "piper-$_piper.tar.gz::https://github.com/rhasspy/piper/releases/download/$_piper/piper_linux_x86_64.tar.gz")
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
-            'SKIP' 'SKIP'
+            'SKIP' 'SKIP' 'SKIP'
             'a50cb45f355b7af1f6d758c1b360717877ba0a398cc8cbe6d2a7a3a26e225992')
 
 package() {
@@ -31,4 +31,6 @@ package() {
   install -d "$pkgdir/usr/lib/constellation"
   cp -a piper "$pkgdir/usr/lib/constellation/piper"
   install -d -m0755 "$pkgdir/var/lib/constellation/russian"
+  # the tutor's model leaves RAM a minute after its last answer
+  install -Dm0644 ollama-constellation.conf "$pkgdir/usr/lib/systemd/system/ollama.service.d/constellation.conf"
 }

@@ -1,0 +1,5 @@
+# Constellation: on battery, the power-saver profile; on the charger, balanced
+# (power-profiles-daemon). Only the mains adapter counts: USB-C ports report as "USB" supplies,
+# and a port with nothing plugged in must not switch the profile.
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/bin/powerprofilesctl set power-saver"
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/bin/powerprofilesctl set balanced"

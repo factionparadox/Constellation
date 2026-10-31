@@ -1,7 +1,7 @@
 # Constellation desktop: the Hyperon compositor with the Caelestia shell, and the apps and services around it.
 pkgname=constellation-desktop
 pkgver=0.3.0
-pkgrel=3
+pkgrel=4
 pkgdesc='Constellation desktop: Hyperon, the Caelestia shell, greetd and the everyday apps'
 arch=('any')
 url='https://github.com/factionparadox/Constellation'
@@ -26,10 +26,10 @@ install=constellation-desktop.install
 source=('hyperon.conf' 'start-shell' 'greetd.toml' 'greetd-constellation.conf' 'shell.json' 'wallpaper.png'
         'shell.qml' 'Greeter.qml' 'Sky.qml' 'greeter-hyperon.conf'
         'constellation-greeter' 'constellation-greeter.tmpfiles'
-        'constellation-logo.png' 'fastfetch-logo.txt' 'fastfetch.jsonc')
+        'constellation-logo.png' 'fastfetch-logo.txt' 'fastfetch.jsonc' '90-constellation-power.rules')
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
             'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
-            'SKIP' 'SKIP' 'SKIP')
+            'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
   install -Dm0644 hyperon.conf "$pkgdir/etc/xdg/hyperon/hyperon.conf"
@@ -50,5 +50,7 @@ package() {
   install -Dm0644 fastfetch-logo.txt "$pkgdir/usr/share/constellation/fastfetch/constellation.txt"
   # system-wide, so every account gets it (fastfetch reads /etc/xdg after ~/.config)
   install -Dm0644 fastfetch.jsonc "$pkgdir/etc/xdg/fastfetch/config.jsonc"
+  # power-saver on battery, balanced on the charger
+  install -Dm0644 90-constellation-power.rules "$pkgdir/usr/lib/udev/rules.d/90-constellation-power.rules"
   install -Dm0644 wallpaper.png "$pkgdir/usr/share/backgrounds/constellation/constellation.png"
 }
